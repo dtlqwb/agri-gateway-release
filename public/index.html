@@ -1,0 +1,2462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>智慧农机监管平台 - 聚合数据中心</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@4/lib/index.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+
+    /* 顶部导航 */
+    .header { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: #fff; padding: 12px 16px; position: sticky; top: 0; z-index: 100; }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header .subtitle { font-size: 12px; opacity: 0.8; }
+
+    /* Tab 导航 */
+    .tab-nav { display: flex; background: #fff; border-bottom: 1px solid #eee; position: sticky; top: 44px; z-index: 99; overflow-x: auto; }
+    .tab-nav .tab { flex: 1; min-width: 70px; text-align: center; padding: 12px 8px; font-size: 13px; color: #666; cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; }
+    .tab-nav .tab.active { color: #1a73e8; border-bottom-color: #1a73e8; font-weight: 600; }
+
+    /* 内容区域 */
+    .page { display: none; padding: 12px; }
+    .page.active { display: block; }
+
+    /* 统计卡片 */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .stat-card { background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .stat-card.full { grid-column: 1 / -1; }
+    .stat-card .label { font-size: 12px; color: #999; margin-bottom: 4px; }
+    .stat-card .value { font-size: 24px; font-weight: 700; color: #1a73e8; }
+    .stat-card .value.orange { color: #ff9800; }
+    .stat-card .value.green { color: #4caf50; }
+    .stat-card .value.purple { color: #9c27b0; }
+    .stat-card .sub { font-size: 11px; color: #999; margin-top: 4px; }
+    .stat-card .progress-bar { height: 6px; background: #f0f0f0; border-radius: 3px; margin-top: 8px; overflow: hidden; }
+    .stat-card .progress-bar .fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+    .stat-card .progress-bar .fill.blue { background: #1a73e8; }
+    .stat-card .progress-bar .fill.orange { background: #ff9800; }
+
+    /* 数据来源分割 */
+    .source-section { margin-bottom: 16px; }
+    .source-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; }
+    .source-title { display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; }
+    .source-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+    .source-badge.realtime { background: #e8f5e9; color: #2e7d32; }
+    .source-badge.imported { background: #fff3e0; color: #e65100; }
+    .source-count { font-size: 13px; color: #999; }
+
+    /* 设备卡片 */
+    .machine-card { background: #fff; border-radius: 10px; padding: 14px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s; }
+    .machine-card:active { transform: scale(0.98); }
+    .machine-card .top { display: flex; justify-content: space-between; align-items: flex-start; }
+    .machine-card .plate { font-size: 15px; font-weight: 600; color: #333; }
+    .machine-card .status { font-size: 11px; padding: 2px 6px; border-radius: 8px; }
+    .machine-card .status.online { background: #e8f5e9; color: #2e7d32; }
+    .machine-card .status.offline { background: #f5f5f5; color: #999; }
+    .machine-card .info { display: flex; gap: 16px; margin-top: 8px; font-size: 12px; color: #666; }
+    .machine-card .acre { font-size: 18px; font-weight: 700; color: #1a73e8; margin-top: 6px; }
+    .machine-card .acre small { font-size: 12px; font-weight: 400; color: #999; }
+    .machine-card .source-tag { font-size: 10px; color: #999; margin-top: 4px; }
+    .machine-card .old-tag { background: #fff3e0; color: #e65100; padding: 1px 6px; border-radius: 8px; font-size: 10px; }
+    .machine-card .old-tag .update-time { color: #999; }
+
+    /* 管理后台 */
+    .admin-card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .admin-card h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .admin-card h3 .icon { font-size: 20px; }
+
+    /* 上传区域 */
+    .upload-zone { border: 2px dashed #ddd; border-radius: 12px; padding: 30px 20px; text-align: center; cursor: pointer; transition: all 0.3s; }
+    .upload-zone:hover, .upload-zone.dragging { border-color: #1a73e8; background: #e8f0fe; }
+    .upload-zone .icon { font-size: 40px; margin-bottom: 8px; }
+    .upload-zone .text { font-size: 14px; color: #666; }
+    .upload-zone .hint { font-size: 12px; color: #999; margin-top: 4px; }
+
+    /* 导入类型选择 */
+    .type-selector { display: flex; gap: 8px; margin-bottom: 16px; }
+    .type-btn { flex: 1; padding: 10px; text-align: center; border: 1px solid #ddd; border-radius: 8px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+    .type-btn.active { border-color: #1a73e8; background: #e8f0fe; color: #1a73e8; font-weight: 600; }
+
+    /* 预览表格 */
+    .preview-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 12px; overflow-x: auto; display: block; }
+    .preview-table th { background: #f5f7fa; padding: 8px 6px; text-align: left; white-space: nowrap; font-weight: 600; color: #333; }
+    .preview-table td { padding: 8px 6px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+    .preview-table .mapped { background: #e8f5e9; }
+    .preview-table .unmapped { background: #fff3e0; }
+
+    /* 导入历史 */
+    .import-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+    .import-item:last-child { border-bottom: none; }
+    .import-item .file-icon { width: 40px; height: 40px; background: #e8f0fe; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .import-item .info { flex: 1; }
+    .import-item .name { font-size: 14px; font-weight: 500; }
+    .import-item .meta { font-size: 12px; color: #999; margin-top: 2px; }
+    .import-item .result { text-align: right; font-size: 12px; }
+    .import-item .result .success { color: #4caf50; }
+    .import-item .result .fail { color: #f44336; }
+
+    /* 空状态 */
+    .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state .text { font-size: 14px; }
+
+    /* 详情页 */
+    .detail-header { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: #fff; padding: 20px 16px; margin: -12px -12px 12px; }
+    .detail-header .back { font-size: 14px; opacity: 0.9; cursor: pointer; margin-bottom: 8px; }
+    .detail-header .plate { font-size: 22px; font-weight: 700; }
+    .detail-header .meta { display: flex; gap: 16px; margin-top: 8px; font-size: 13px; opacity: 0.9; }
+
+    /* 作业记录列表 */
+    .record-item { background: #fff; border-radius: 10px; padding: 12px 14px; margin-bottom: 6px; display: flex; align-items: center; gap: 12px; }
+    .record-item .date { width: 50px; text-align: center; }
+    .record-item .date .day { font-size: 20px; font-weight: 700; color: #1a73e8; }
+    .record-item .date .month { font-size: 11px; color: #999; }
+    .record-item .detail { flex: 1; }
+    .record-item .type { font-size: 13px; font-weight: 500; }
+    .record-item .area { font-size: 18px; font-weight: 700; color: #1a73e8; }
+    .record-item .area small { font-size: 12px; font-weight: 400; color: #666; }
+    .record-item .ok-area { font-size: 12px; color: #4caf50; margin-top: 2px; }
+
+    /* 监控地图 */
+    .map-container { width: 100%; height: 300px; border-radius: 12px; overflow: hidden; margin-bottom: 12px; background: #e8e8e8; }
+    #monitorMap { width: 100%; height: 100%; }
+    .monitor-list { max-height: 400px; overflow-y: auto; }
+
+    /* 列映射编辑 */
+    .mapping-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+    .mapping-row .from { flex: 1; background: #f5f5f5; padding: 6px 10px; border-radius: 6px; color: #333; }
+    .mapping-row .arrow { color: #999; }
+    .mapping-row .to { flex: 1; }
+    .mapping-row select { width: 100%; padding: 6px 10px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; }
+
+    /* 操作按钮 */
+    .btn { padding: 10px 20px; border: none; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: #1a73e8; color: #fff; }
+    .btn-primary:hover { background: #1557b0; }
+    .btn-secondary { background: #f5f5f5; color: #333; }
+    .btn-success { background: #4caf50; color: #fff; }
+    .btn-block { width: 100%; text-align: center; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .loading { text-align: center; padding: 20px; color: #999; }
+    .loading .spinner { display: inline-block; width: 24px; height: 24px; border: 2px solid #ddd; border-top-color: #1a73e8; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 农户列表项 */
+    .farmer-item { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+    .farmer-item:last-child { border-bottom: none; }
+    .farmer-item .avatar { width: 40px; height: 40px; background: linear-gradient(135deg, #1a73e8, #0d47a1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; font-weight: 600; flex-shrink: 0; }
+    .farmer-item .info { flex: 1; min-width: 0; }
+    .farmer-item .name-row { display: flex; align-items: center; gap: 6px; }
+    .farmer-item .name { font-size: 14px; font-weight: 600; }
+    .farmer-item .phone { font-size: 12px; color: #999; }
+    .farmer-item .org { font-size: 12px; color: #1a73e8; margin-top: 2px; }
+    .farmer-item .actions { display: flex; gap: 6px; flex-shrink: 0; }
+    .farmer-item .actions button { padding: 4px 10px; font-size: 12px; border: none; border-radius: 6px; cursor: pointer; }
+    .farmer-item .actions .edit-btn { background: #e8f0fe; color: #1a73e8; }
+    .farmer-item .actions .del-btn { background: #ffebee; color: #f44336; }
+    .farmer-item .actions .toggle-btn { background: #f5f5f5; color: #666; }
+    .farmer-item .disabled-tag { color: #999; font-style: italic; }
+
+    .flex-center { display: flex; align-items: center; justify-content: center; }
+    .gap-8 { gap: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mb-8 { margin-bottom: 8px; }
+    .text-center { text-align: center; }
+    .text-muted { color: #999; font-size: 12px; }
+
+    /* 管理员登录弹窗 */
+    .login-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+    .login-box { background: #fff; border-radius: 16px; padding: 30px 24px; width: 90%; max-width: 360px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .login-box h2 { font-size: 22px; text-align: center; margin-bottom: 8px; color: #1a73e8; }
+    .login-box .subtitle { text-align: center; font-size: 13px; color: #999; margin-bottom: 24px; }
+    .login-box .form-group { margin-bottom: 16px; }
+    .login-box .form-group label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; }
+    .login-box .form-group input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+    .login-box .error-msg { color: #f44336; font-size: 12px; text-align: center; margin-bottom: 12px; min-height: 18px; }
+    .login-box .role-info { background: #e8f0fe; border-radius: 8px; padding: 10px; font-size: 12px; color: #1a73e8; margin-top: 16px; }
+    .login-box .role-info .role-super { color: #f44336; font-weight: 600; }
+    .login-box .role-info .role-viewer { color: #ff9800; font-weight: 600; }
+    .header-right { position: absolute; right: 16px; top: 12px; display: flex; align-items: center; gap: 8px; }
+    .header-right .user-info { font-size: 12px; color: rgba(255,255,255,0.9); }
+    .header-right .logout-btn { padding: 4px 12px; border: 1px solid rgba(255,255,255,0.5); border-radius: 6px; background: transparent; color: #fff; font-size: 12px; cursor: pointer; }
+    .header-right .logout-btn:hover { background: rgba(255,255,255,0.2); }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- 顶部 -->
+    <div class="header">
+      <h1>🌾 智慧农机监管平台</h1>
+      <div class="subtitle">灵丘县煊耀通讯 · 聚合数据中心</div>
+    </div>
+
+    <!-- Tab 导航 -->
+    <div class="tab-nav">
+      <div class="tab active" onclick="switchTab('dashboard')">📊 看板</div>
+      <div class="tab" onclick="switchTab('machines')">🚜 设备</div>
+      <div class="tab" onclick="switchTab('monitor')">📡 监控</div>
+      <div class="tab" onclick="switchTab('verify')">📋 核对</div>
+      <div class="tab" onclick="switchTab('repair')">🔧 修复</div>
+      <div class="tab" onclick="switchTab('admin')">⚙️ 管理</div>
+    </div>
+
+    <!-- ==================== 看板页 ==================== -->
+    <div id="page-dashboard" class="page active">
+      <!-- 时间段选择器 -->
+      <div class="admin-card" style="margin-bottom: 12px;">
+        <h3 style="margin-bottom: 10px;">📅 数据时间段</h3>
+        <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 120px;">
+            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px;">开始日期</label>
+            <input type="date" id="dashboard-start-date" style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+          </div>
+          <div style="flex: 1; min-width: 120px;">
+            <label style="font-size: 12px; color: #666; display: block; margin-bottom: 4px;">结束日期</label>
+            <input type="date" id="dashboard-end-date" style="width: 100%; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px;">
+          </div>
+          <div style="display: flex; gap: 6px; align-self: flex-end;">
+            <button class="btn btn-secondary" onclick="setDateRange('today')" style="padding: 8px 12px; font-size: 12px;">今日</button>
+            <button class="btn btn-secondary" onclick="setDateRange('month')" style="padding: 8px 12px; font-size: 12px;">本月</button>
+            <button class="btn btn-primary" onclick="setDateRange('year')" style="padding: 8px 12px; font-size: 12px;">本年</button>
+            <button class="btn btn-success" onclick="applyDateFilter()" style="padding: 8px 16px; font-size: 12px;">✅ 应用</button>
+          </div>
+        </div>
+        <div id="current-date-range" style="margin-top: 8px; font-size: 12px; color: #1a73e8;"></div>
+      </div>
+
+      <div class="stat-grid" id="stats-grid">
+        <!-- 动态填充 -->
+      </div>
+
+      <!-- 数据来源分布 -->
+      <div class="admin-card">
+        <h3>📈 数据来源分布</h3>
+        <div id="source-distribution">
+          <div class="loading"><div class="spinner"></div><br>加载中...</div>
+        </div>
+      </div>
+
+      <!-- 快速操作 -->
+      <div class="admin-card">
+        <h3>⚡ 快速操作</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div class="machine-card" onclick="switchTab('monitor')" style="text-align:center;">
+            <div style="font-size:28px;margin-bottom:4px;">📡</div>
+            <div style="font-size:13px;font-weight:500;">实时监控</div>
+          </div>
+          <div class="machine-card" onclick="switchTab('admin')" style="text-align:center;">
+            <div style="font-size:28px;margin-bottom:4px;">📤</div>
+            <div style="font-size:13px;font-weight:500;">导入数据</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 设备列表页 ==================== -->
+    <div id="page-machines" class="page">
+      <div id="machines-content">
+        <div class="loading"><div class="spinner"></div><br>加载设备中...</div>
+      </div>
+    </div>
+
+    <!-- ==================== 监控页 ==================== -->
+    <div id="page-monitor" class="page">
+      <div class="map-container">
+        <div id="monitorMap"></div>
+      </div>
+      <div class="admin-card">
+        <h3>📡 设备状态 (<span id="monitor-total">0</span>台)</h3>
+        <div class="monitor-list" id="monitor-list">
+          <div class="loading"><div class="spinner"></div><br>加载监控数据...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 管理后台页 ==================== -->
+    <div id="page-admin" class="page">
+      <!-- 农户管理 -->
+      <div class="admin-card">
+        <h3><span class="icon">👥</span> 农户账号管理</h3>
+        <div style="font-size:12px;color:#999;margin-bottom:12px;">添加农户账号，关联合作社后农户可查看该合作社下的设备作业数据</div>
+
+        <!-- 添加农户表单 -->
+        <div id="farmer-form" style="display:none;background:#f5f7fa;border-radius:10px;padding:14px;margin-bottom:12px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">姓名 *</label>
+              <input id="farmer-name" type="text" placeholder="农户姓名" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;">
+            </div>
+            <div>
+              <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">手机号 *</label>
+              <input id="farmer-phone" type="tel" placeholder="登录账号" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;">
+            </div>
+            <div>
+              <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">密码</label>
+              <input id="farmer-password" type="text" placeholder="默认 123456" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;">
+            </div>
+            <div>
+              <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">关联合作社 *</label>
+              <select id="farmer-org" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;">
+                <option value="">请选择合作社</option>
+              </select>
+            </div>
+            <div style="grid-column:1/-1;">
+              <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">备注</label>
+              <input id="farmer-remark" type="text" placeholder="可选" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:14px;">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px;">
+            <button class="btn btn-secondary" onclick="cancelFarmerForm()" style="flex:1;">取消</button>
+            <button class="btn btn-primary" id="farmer-submit-btn" onclick="submitFarmer()" style="flex:2;">✅ 保存</button>
+          </div>
+          <input type="hidden" id="farmer-edit-id" value="">
+        </div>
+
+        <!-- 添加按钮 -->
+        <div id="farmer-add-btn">
+          <button class="btn btn-primary btn-block" onclick="showFarmerForm()">+ 添加农户</button>
+        </div>
+
+        <!-- 农户列表 -->
+        <div id="farmer-list" style="margin-top:12px;">
+          <div class="loading"><div class="spinner"></div><br>加载中...</div>
+        </div>
+      </div>
+
+      <!-- Excel 导入 -->
+      <div class="admin-card">
+        <h3><span class="icon">📤</span> 导入旧供应商数据</h3>
+        <div class="type-selector">
+          <div class="type-btn active" onclick="selectImportType('work_records', this)">📋 作业记录</div>
+          <div class="type-btn" onclick="selectImportType('machines', this)">🚜 设备列表</div>
+        </div>
+
+        <!-- 上传区 -->
+        <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()"
+             ondragover="event.preventDefault();this.classList.add('dragging')"
+             ondragleave="this.classList.remove('dragging')"
+             ondrop="handleDrop(event)">
+          <div class="icon">📄</div>
+          <div class="text">点击或拖拽上传 Excel 文件</div>
+          <div class="hint">支持 .xlsx / .xls 格式，最大 50MB</div>
+        </div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none" onchange="handleFileSelect(event)">
+
+        <!-- 预览区（上传后显示） -->
+        <div id="preview-area" style="display:none;margin-top:16px;">
+          <h4 style="font-size:14px;margin-bottom:8px;">📋 预览数据（前10行）</h4>
+          <div id="preview-info" style="font-size:12px;color:#666;margin-bottom:8px;"></div>
+
+          <!-- 列映射 -->
+          <div id="mapping-area" style="margin-bottom:12px;"></div>
+
+          <!-- 预览表格 -->
+          <div style="overflow-x:auto;">
+            <table class="preview-table" id="preview-table"></table>
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:16px;">
+            <button class="btn btn-secondary" onclick="cancelImport()" style="flex:1;">取消</button>
+            <button class="btn btn-primary" id="confirmBtn" onclick="confirmImport()" style="flex:2;">✅ 确认导入</button>
+          </div>
+        </div>
+
+        <!-- 导入结果 -->
+        <div id="import-result" style="display:none;margin-top:16px;"></div>
+      </div>
+
+      <!-- 导入历史 -->
+      <div class="admin-card">
+        <h3><span class="icon">📜</span> 导入历史</h3>
+        <div id="import-history">
+          <div class="loading"><div class="spinner"></div><br>加载中...</div>
+        </div>
+      </div>
+
+      <!-- 旧供应商数据同步（仅超管可见） -->
+      <div class="admin-card" id="old-crawl-section" style="display:none;">
+        <h3><span class="icon">📥</span> 旧供应商数据同步</h3>
+        <div style="font-size:12px;color:#999;margin-bottom:12px;">自动从旧供应商平台抓取作业数据，每天凌晨3:00执行</div>
+        
+        <!-- 同步状态 -->
+        <div id="crawl-status" style="background:#f5f7fa;border-radius:8px;padding:12px;margin-bottom:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div>
+              <div style="font-size:13px;font-weight:600;">上次同步</div>
+              <div id="last-crawl-time" style="font-size:12px;color:#666;margin-top:4px;">加载中...</div>
+            </div>
+            <div style="text-align:right;">
+              <div id="crawl-status-badge" style="font-size:11px;padding:3px 8px;border-radius:10px;background:#f0f0f0;color:#999;">未知</div>
+              <div id="crawl-records-info" style="font-size:12px;color:#666;margin-top:4px;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 操作按钮 -->
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="triggerOldCrawl()" style="flex:1;">🚀 立即同步</button>
+          <button class="btn btn-secondary" onclick="showCrawlLogs()" style="flex:1;">📋 查看日志</button>
+        </div>
+      </div>
+
+      <!-- 管理员账号管理（仅超管可见） -->
+      <div class="admin-card" id="admin-manage-section" style="display:none;">
+        <h3><span class="icon">🔐</span> 管理员账号管理</h3>
+        <div style="font-size:12px;color:#999;margin-bottom:12px;">管理系统管理员账号，分配权限角色</div>
+        <button class="btn btn-primary btn-block" onclick="window.location.href='admin-manage.html'">👥 进入管理员管理页面</button>
+      </div>
+    </div>
+
+    <!-- ==================== 数据核对页（农业局） ==================== -->
+    <div id="page-verify" class="page">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <h3 style="margin:0;font-size:17px;">📋 作业数据核对</h3>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span id="sync-status-badge" style="font-size:11px;padding:3px 8px;border-radius:10px;background:#f0f0f0;color:#999;">同步状态加载中...</span>
+          <button class="btn btn-secondary" onclick="loadVerifyData()" style="padding:6px 12px;font-size:12px;" id="verify-refresh-btn">🔄 刷新</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:#999;margin-bottom:14px;">云途安数据每日自动同步至本地，旧供应商数据通过Excel导入，支持日期筛选和Excel导出</div>
+
+      <!-- 数据同步 -->
+      <div class="admin-card" style="padding:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div style="font-size:13px;font-weight:600;">☁️ 云途安数据同步</div>
+            <div style="font-size:11px;color:#999;margin-top:2px;" id="sync-info">每天凌晨2:00自动同步前一天数据，也可手动触发</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;">
+            <input type="date" id="sync-date" style="padding:6px 8px;border:1px solid #ddd;border-radius:6px;font-size:12px;">
+            <button class="btn btn-primary" onclick="manualSync()" style="padding:6px 14px;font-size:12px;" id="sync-btn">📥 手动同步</button>
+          </div>
+        </div>
+        <!-- 同步历史 -->
+        <div id="sync-history" style="margin-top:10px;display:none;">
+          <div style="font-size:12px;font-weight:600;margin-bottom:6px;color:#666;">最近同步记录</div>
+          <div id="sync-history-list" style="max-height:120px;overflow-y:auto;font-size:11px;"></div>
+        </div>
+      </div>
+
+      <!-- 日期筛选 + 导出 -->
+      <div class="admin-card" style="padding:14px;">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          <input type="date" id="verify-start" style="flex:1;min-width:120px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+          <span style="color:#999;">~</span>
+          <input type="date" id="verify-end" style="flex:1;min-width:120px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+          <select id="verify-org" style="flex:1;min-width:100px;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+            <option value="">全部合作社</option>
+          </select>
+          <button class="btn btn-primary" onclick="loadVerifyData()" style="padding:8px 14px;font-size:13px;" id="verify-query-btn">查询</button>
+          <button class="btn btn-secondary" onclick="exportVerifyExcel()" style="padding:8px 14px;font-size:13px;">📥 导出Excel</button>
+        </div>
+      </div>
+
+      <!-- 数据来源分布 -->
+      <div class="admin-card" style="margin-top:14px;padding:14px;" id="verify-source-card" hidden>
+        <div style="font-size:13px;font-weight:600;margin-bottom:10px;">📊 数据来源分布</div>
+        <div id="verify-source-distribution"></div>
+      </div>
+
+      <!-- 总计 -->
+      <div class="stat-grid" id="verify-total" style="margin-top:14px;">
+        <div class="stat-card"><div class="label">作业总面积</div><div class="value green" id="vTotalAcre">-</div><div class="sub">亩</div></div>
+        <div class="stat-card"><div class="label">涉及设备</div><div class="value" id="vTotalMachines">-</div><div class="sub">台</div></div>
+        <div class="stat-card"><div class="label">作业记录</div><div class="value orange" id="vTotalRecords">-</div><div class="sub">条</div></div>
+        <div class="stat-card"><div class="label">合作社</div><div class="value" id="vTotalOrgs">-</div><div class="sub">个</div></div>
+      </div>
+
+      <!-- 按合作社汇总 -->
+      <div class="admin-card" style="margin-top:14px;">
+        <h4 style="margin:0 0 10px;font-size:15px;">按合作社汇总</h4>
+        <div id="verify-byOrg"><div class="loading"><div class="spinner"></div><br>点击「查询」加载数据</div></div>
+      </div>
+
+      <!-- 按作业类型汇总 -->
+      <div class="admin-card" style="margin-top:14px;">
+        <h4 style="margin:0 0 10px;font-size:15px;">按作业类型汇总</h4>
+        <div id="verify-byType"><div class="loading"><div class="spinner"></div><br>点击「查询」加载数据</div></div>
+      </div>
+
+      <!-- 全量数据导出 -->
+      <div class="admin-card" style="margin-top:14px;">
+        <h3 style="margin-bottom:12px;">📊 全量数据导出</h3>
+        <div style="font-size:12px;color:#999;margin-bottom:12px;">导出新旧供应商的全量合并数据，自动去重，修复后的数据优先</div>
+        
+        <!-- 导出选项 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+          <div>
+            <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">开始日期</label>
+            <input type="date" id="export-start-date" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+          </div>
+          <div>
+            <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">结束日期</label>
+            <input type="date" id="export-end-date" style="width:100%;padding:8px 10px;border:1px solid #ddd;border-radius:8px;font-size:13px;">
+          </div>
+          <div>
+            <label style="font-size:12px;color:#666;display:block;margin-bottom:4px;">数据源</label>
+            <div style="display:flex;gap:8px;margin-top:4px;">
+              <label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+                <input type="checkbox" id="export-source-yuntinan" checked> 云途安
+              </label>
+              <label style="font-size:13px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+                <input type="checkbox" id="export-source-old" checked> 旧供应商
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 预览按钮 -->
+        <button class="btn btn-secondary btn-block" onclick="loadExportPreview()" style="margin-bottom:10px;">🔍 预览数据</button>
+
+        <!-- 预览结果 -->
+        <div id="export-preview-result" style="display:none;background:#f5f7fa;border-radius:8px;padding:12px;margin-bottom:12px;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:8px;">预览结果</div>
+          <div id="export-preview-content"></div>
+        </div>
+
+        <!-- 导出按钮 -->
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-primary" onclick="exportAllRecords('excel')" style="flex:1;">📥 导出Excel</button>
+          <button class="btn btn-secondary" onclick="exportAllRecords('csv')" style="flex:1;">📄 导出CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 设备详情页 ==================== -->
+    <div id="page-detail" class="page">
+      <div id="detail-content"></div>
+    </div>
+  </div>
+
+  <!-- 高德地图 SDK -->
+  <script src="https://webapi.amap.com/maps?v=2.0&key=1f89c7e4a8c6c7a2e5e37b0b6c7a5e37"></script>
+
+  <script>
+    const API = '';
+    let currentTab = 'dashboard';
+    let importType = 'work_records';
+    let uploadedFile = null;
+    let previewData = null;
+    let monitorMap = null;
+    let monitorMarkers = [];
+
+    // ===================== 管理员权限 =====================
+    let currentUser = null; // 当前登录的管理员
+
+    // 显示登录弹窗
+    function showLoginModal() {
+      const overlay = document.createElement('div');
+      overlay.className = 'login-overlay';
+      overlay.id = 'login-overlay';
+      overlay.innerHTML = `
+        <div class="login-box">
+          <h2>🔐 管理员登录</h2>
+          <div class="subtitle">智慧农机监管平台</div>
+          <div class="error-msg" id="login-error"></div>
+          <div class="form-group">
+            <label>用户名</label>
+            <input type="text" id="login-username" placeholder="请输入用户名" autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label>密码</label>
+            <input type="password" id="login-password" placeholder="请输入密码" autocomplete="current-password">
+          </div>
+          <button class="btn btn-primary btn-block" onclick="doLogin()" id="login-btn">登 录</button>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      // 回车登录
+      document.getElementById('login-password').addEventListener('keydown', e => {
+        if (e.key === 'Enter') doLogin();
+      });
+      document.getElementById('login-username').addEventListener('keydown', e => {
+        if (e.key === 'Enter') document.getElementById('login-password').focus();
+      });
+
+      // 检查是否有缓存的登录信息
+      const saved = localStorage.getItem('admin_user');
+      if (saved) {
+        try {
+          const user = JSON.parse(saved);
+          currentUser = user;
+          applyPermissions();
+          overlay.remove();
+          return;
+        } catch(e) {}
+      }
+    }
+
+    // 执行登录
+    async function doLogin() {
+      const username = document.getElementById('login-username').value.trim();
+      const password = document.getElementById('login-password').value.trim();
+      const errorEl = document.getElementById('login-error');
+      const btn = document.getElementById('login-btn');
+
+      if (!username || !password) {
+        errorEl.textContent = '请输入用户名和密码';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '登录中...';
+      errorEl.textContent = '';
+
+      try {
+        const res = await fetch(`${API}/api/admin/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          currentUser = res.data;
+          localStorage.setItem('admin_user', JSON.stringify(currentUser));
+          document.getElementById('login-overlay').remove();
+          applyPermissions();
+          loadDashboard();
+        } else {
+          errorEl.textContent = res.msg || '登录失败';
+        }
+      } catch (e) {
+        errorEl.textContent = '网络错误，请重试';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '登 录';
+      }
+    }
+
+    // 退出登录
+    function doLogout() {
+      if (!confirm('确定要退出登录吗？')) return;
+      currentUser = null;
+      localStorage.removeItem('admin_user');
+      location.reload();
+    }
+
+    // 应用权限控制
+    function applyPermissions() {
+      if (!currentUser) return;
+
+      const isSuper = currentUser.role === 'super';
+
+      // 更新顶部用户信息
+      const header = document.querySelector('.header');
+      const existingRight = header.querySelector('.header-right');
+      if (existingRight) existingRight.remove();
+
+      const rightDiv = document.createElement('div');
+      rightDiv.className = 'header-right';
+      rightDiv.innerHTML = `
+        <div class="user-info">
+          ${currentUser.name || currentUser.username} · 
+          <span class="${isSuper ? 'role-super' : 'role-viewer'}">
+            ${isSuper ? '🔑 超管' : '👁️ 只读'}
+          </span>
+        </div>
+        <button class="logout-btn" onclick="doLogout()">退出</button>
+      `;
+      header.appendChild(rightDiv);
+
+      // 根据角色隐藏/显示功能
+      
+      // 1. 数据修复 Tab（只有超管可见）- 第5个Tab
+      const repairTab = document.querySelector('.tab-nav .tab:nth-child(5)');
+      if (repairTab) repairTab.style.display = isSuper ? '' : 'none';
+
+      // 2. 管理 Tab（只有超管可见）- 第6个Tab
+      const adminTab = document.querySelector('.tab-nav .tab:nth-child(6)');
+      if (adminTab) adminTab.style.display = isSuper ? '' : 'none';
+
+      // 3. 数据修复页面（只有超管可见）
+      const repairPage = document.getElementById('page-repair');
+      if (repairPage) repairPage.style.display = isSuper ? '' : 'none';
+
+      // 4. 管理页面（只有超管可见）
+      const adminPage = document.getElementById('page-admin');
+      if (adminPage) adminPage.style.display = isSuper ? '' : 'none';
+
+      // 5. Excel导入功能（只有超管可见）
+      const importCard = document.querySelector('#page-admin .admin-card:nth-child(2)'); // Excel导入卡片
+      if (importCard) importCard.style.display = isSuper ? '' : 'none';
+
+      // 6. 同步按钮（只有超管可见）
+      const syncBtn = document.getElementById('sync-btn');
+      if (syncBtn) syncBtn.style.display = isSuper ? '' : 'none';
+
+      // 7. 农户管理功能（只有超管可见）
+      const farmerAddBtn = document.getElementById('farmer-add-btn');
+      if (farmerAddBtn) farmerAddBtn.style.display = isSuper ? '' : 'none';
+
+      // 8. 管理员账号管理入口（只有超管可见）
+      const adminManageSection = document.getElementById('admin-manage-section');
+      if (adminManageSection) adminManageSection.style.display = isSuper ? '' : 'none';
+
+      // 9. 旧供应商数据同步（只有超管可见）
+      const oldCrawlSection = document.getElementById('old-crawl-section');
+      if (oldCrawlSection) {
+        oldCrawlSection.style.display = isSuper ? '' : 'none';
+        if (isSuper) loadCrawlStatus(); // 加载同步状态
+      }
+
+      console.log(`[权限] 当前用户: ${currentUser.name}, 角色: ${isSuper ? '超管' : '只读'}`);
+    }
+
+    // 检查权限的辅助函数
+    function requireSuper() {
+      if (!currentUser || currentUser.role !== 'super') {
+        alert('⚠️ 此功能需要超管权限');
+        return false;
+      }
+      return true;
+    }
+
+    // 包装fetch请求，自动添加token
+    async function fetchWithAuth(url, options = {}) {
+      if (!currentUser) {
+        showLoginModal();
+        return Promise.reject(new Error('未登录'));
+      }
+
+      options.headers = {
+        ...options.headers,
+        'Authorization': currentUser.token
+      };
+
+      const res = await fetch(url, options);
+      
+      // 如果是401或403，说明token过期或无权限
+      if (res.status === 401 || res.status === 403) {
+        alert('登录已过期或无权限，请重新登录');
+        doLogout();
+        return Promise.reject(new Error('未授权'));
+      }
+
+      return res.json();
+    }
+
+    // ===================== Tab 切换 =====================
+    function switchTab(tab) {
+      // 权限检查：农业局不能访问修复和管理页面
+      if (currentUser && currentUser.role !== 'super') {
+        if (tab === 'repair' || tab === 'admin') {
+          console.warn(`[权限] ${currentUser.role} 角色无权访问 ${tab} 页面`);
+          return; // 直接返回，不执行切换
+        }
+      }
+      
+      currentTab = tab;
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-nav .tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('page-' + tab)?.classList.add('active');
+      document.querySelectorAll('.tab-nav .tab').forEach(t => {
+        if (t.textContent.includes(getTabLabel(tab))) t.classList.add('active');
+      });
+
+      if (tab === 'dashboard') loadDashboard();
+      else if (tab === 'machines') loadMachines();
+      else if (tab === 'monitor') loadMonitor();
+      else if (tab === 'verify') initVerifyPage();
+      else if (tab === 'repair') window.location.href = 'data-repair-work.html';
+      else if (tab === 'admin') { loadFarmerList(); loadImportHistory(); }
+    }
+
+    function getTabLabel(tab) {
+      return { dashboard: '看板', machines: '设备', monitor: '监控', verify: '核对', repair: '修复', admin: '管理', detail: '设备详情' }[tab] || tab;
+    }
+
+    // ===================== 看板 =====================
+    async function loadDashboard() {
+      try {
+        // 构建带日期参数的URL
+        const dateParams = new URLSearchParams();
+        if (currentDateFilter.startDate) {
+          dateParams.append('startDate', currentDateFilter.startDate);
+        }
+        if (currentDateFilter.endDate) {
+          dateParams.append('endDate', currentDateFilter.endDate);
+        }
+        const queryString = dateParams.toString();
+        
+        const [statsRes, allRes] = await Promise.all([
+          fetch(`${API}/api/stats?${queryString}`).then(r => r.json()).catch(e => ({ data: {} })),
+          fetch(`${API}/api/agri/summary?${queryString}`).then(r => r.json()).catch(e => ({ data: {} }))
+        ]);
+
+        const yt = statsRes.data || {};
+        const all = allRes.data || {};
+        // 兼容 old 和 old_api 两种格式
+        const old = all.sources?.old || all.sources?.old_api || { acre: 0, machines: 0, records: 0 };
+        const yuntinan = all.sources?.yuntinan || { acre: 0, machines: 0, records: 0 };
+
+        // 合并新旧供应商的按类型面积
+        const typeMap = {};
+        // 1. 先加入云途安数据（耕、种、管、收）
+        typeMap['耕'] = parseFloat(yt.geng || 0);
+        typeMap['种'] = parseFloat(yt.zhong || 0);
+        typeMap['管'] = parseFloat(yt.guan || 0);
+        typeMap['收'] = parseFloat(yt.shou || 0);
+        
+        // 2. 加入旧供应商数据（使用后端返回的 oldByType，只包含 source='old' 的数据）
+        if (all.oldByType) {
+          all.oldByType.forEach(t => {
+            const name = t.work_type_name || '其他';
+            let shortName = '其他';
+            // 将详细名称映射到简写
+            if (name.includes('旋耕') || name.includes('深翻') || name.includes('秸秆')) shortName = '耕';
+            else if (name.includes('播种') || name.includes('种')) shortName = '种';
+            else if (name.includes('管') || name.includes('植保') || name.includes('打药')) shortName = '管';
+            else if (name.includes('收获') || name.includes('收')) shortName = '收';
+            
+            typeMap[shortName] = (typeMap[shortName] || 0) + parseFloat(t.total_acre || 0);
+          });
+        }
+
+        const totalAcre = parseFloat(yuntinan.acre || 0) + parseFloat(old.acre || 0);
+        const totalMachines = (yuntinan.machines || 0) + (old.machines || 0);
+
+        const grid = document.getElementById('stats-grid');
+        grid.innerHTML = `
+          <!-- 总体统计 -->
+          <div class="stat-card" style="grid-column: span 2; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="label" style="color: rgba(255,255,255,0.9);">📊 作业面积总计</div>
+            <div class="value" style="color: white; font-size: 36px;">${formatAcre(totalAcre)}亩</div>
+            <div class="sub" style="color: rgba(255,255,255,0.8);">共 ${totalMachines} 台设备 · ${(yuntinan.records || 0) + (old.records || 0)} 条记录</div>
+          </div>
+
+          <!-- 新供应商（云途安） -->
+          <div class="stat-card" style="background: #f0f9ff; border-left: 4px solid #0ea5e9;">
+            <div class="label" style="color: #0c4a6e;">☁️ 新供应商 - 云途安</div>
+            <div class="value" style="color: #0369a1; font-size: 28px;">${formatAcre(yuntinan.acre || 0)}亩</div>
+            <div class="sub" style="color: #64748b;">${yuntinan.machines || 0} 台设备 · ${yuntinan.records || 0} 条记录</div>
+          </div>
+
+          <!-- 旧供应商 -->
+          <div class="stat-card" style="background: #fef3c7; border-left: 4px solid #f59e0b;">
+            <div class="label" style="color: #78350f;">📦 旧供应商 - 北斗设备</div>
+            <div class="value" style="color: #b45309; font-size: 28px;">${formatAcre(old.acre || 0)}亩</div>
+            <div class="sub" style="color: #64748b;">${old.machines || 0} 台设备 · ${old.records || 0} 条记录</div>
+          </div>
+
+          <!-- 作业类型统计 -->
+          ${Object.entries(typeMap).sort((a,b) => b[1] - a[1]).map(([name, acre]) => {
+            const colors = { '耕': '', '种': 'orange', '管': 'purple', '收': '' };
+            return `<div class="stat-card">
+              <div class="label">${name}</div>
+              <div class="value ${colors[name] || ''}">${formatAcre(acre)}亩</div>
+            </div>`;
+          }).join('')}
+        `;
+
+        // 数据来源分布
+        const dist = document.getElementById('source-distribution');
+        const ytAcre = yuntinan.acre || 0;
+        const oldAcre = old.acre || 0;
+        const ytPct = totalAcre > 0 ? (ytAcre / totalAcre * 100).toFixed(1) : 0;
+        const oldPct = totalAcre > 0 ? (oldAcre / totalAcre * 100).toFixed(1) : 0;
+
+        // 旧供应商按类型分布
+        let typeHtml = '';
+        if (all.oldByType && all.oldByType.length > 0) {
+          typeHtml = `
+            <div style="margin-top:16px;">
+              <div style="font-size:14px;font-weight:600;margin-bottom:8px;">📊 作业类型分布（旧供应商）</div>
+              ${all.oldByType.map(t => `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f5f5f5;">
+                  <span style="font-size:13px;">${t.work_type_name}</span>
+                  <span>
+                    <span style="font-weight:600;color:#1a73e8;">${formatAcre(t.total_acre)}亩</span>
+                    <span style="font-size:11px;color:#999;margin-left:4px;">${t.record_count}条</span>
+                  </span>
+                </div>
+              `).join('')}
+            </div>`;
+        }
+
+        let orgHtml = '';
+        if (all.byOrg && all.byOrg.length > 0) {
+          orgHtml = `
+            <div style="margin-top:16px;">
+              <div style="font-size:14px;font-weight:600;margin-bottom:8px;">🏢 合作社/公司统计</div>
+              ${all.byOrg.map(org => `
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f5f5f5;">
+                  <div>
+                    <div style="font-size:13px;font-weight:500;">${org.org_name || org.name || '未命名'}</div>
+                    <div class="text-muted">${org.machine_count || 0} 台设备 · ${org.record_count || 0} 条记录</div>
+                  </div>
+                  <div style="text-align:right;">
+                    <div style="font-size:16px;font-weight:700;color:#1a73e8;">${formatAcre(org.total_acre)} <small style="font-size:11px;color:#999;">亩</small></div>
+                  </div>
+                </div>
+              `).join('')}
+            </div>`;
+        }
+
+        dist.innerHTML = `
+          <!-- 总体统计 -->
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px; padding: 16px; margin-bottom: 16px; color: white;">
+            <div style="font-size: 14px; opacity: 0.9; margin-bottom: 8px;">📊 作业面积总计</div>
+            <div style="font-size: 32px; font-weight: 700;">${formatAcre(totalAcre)} <small style="font-size: 16px;">亩</small></div>
+            <div style="font-size: 12px; opacity: 0.8; margin-top: 4px;">共 ${all.machines || 0} 台设备 · ${all.records || 0} 条记录</div>
+          </div>
+
+          <!-- 新供应商（云途安） -->
+          <div class="source-section" style="background: #f0f9ff; border-left: 4px solid #0ea5e9; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div>
+                <span style="font-size: 16px; font-weight: 600; color: #0c4a6e;">☁️ 新供应商 - 云途安</span>
+                <span class="source-badge realtime" style="margin-left: 8px;">实时同步</span>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 24px; font-weight: 700; color: #0369a1;">${formatAcre(ytAcre)}</div>
+                <div style="font-size: 12px; color: #64748b;">${ytPct}% · ${yuntinan.machines || 0} 台设备</div>
+              </div>
+            </div>
+            <div class="progress-bar" style="height: 8px;"><div class="fill blue" style="width:${Math.max(ytPct, 1)}%"></div></div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">📡 自动从云平台同步，每4小时更新一次</div>
+          </div>
+
+          <!-- 旧供应商 -->
+          <div class="source-section" style="background: #fef3c7; border-left: 4px solid #f59e0b; padding: 12px; border-radius: 8px; margin-bottom: 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+              <div>
+                <span style="font-size: 16px; font-weight: 600; color: #78350f;">📦 旧供应商 - 北斗设备</span>
+                <span class="source-badge imported" style="margin-left: 8px;">API抓取</span>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 24px; font-weight: 700; color: #b45309;">${formatAcre(oldAcre)}</div>
+                <div style="font-size: 12px; color: #64748b;">${oldPct}% · ${old.orgCount || 0} 个组织</div>
+              </div>
+            </div>
+            <div class="progress-bar" style="height: 8px;"><div class="fill orange" style="width:${Math.max(oldPct, 0)}%"></div></div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 4px;">🔄 从旧平台API抓取，每天凌晨4点同步</div>
+          </div>
+
+          ${typeHtml}
+          ${orgHtml}
+          ${old.lastImport ? `<div class="text-muted mt-12">✅ 旧数据最后更新：${old.lastImport}</div>` : 
+            `<div class="text-muted mt-12">💡 去管理页导入旧供应商数据</div>`}
+        `;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // ===================== 设备列表 =====================
+    async function loadMachines() {
+      const container = document.getElementById('machines-content');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div><br>加载设备中...</div>';
+
+      try {
+        // 从数据库加载云途安设备和旧供应商设备
+        const [ytRes, oldRes] = await Promise.all([
+          fetch(`${API}/api/machines`).then(r => r.json()).catch(e => ({ data: [] })),
+          fetch(`${API}/api/old/machines`).then(r => r.json()).catch(() => ({ data: [] }))
+        ]);
+
+        const ytMachines = ytRes.data || [];
+        const oldMachines = oldRes.data || [];
+
+        let html = '';
+
+        // 云途安设备（已同步到本地数据库）
+        if (ytMachines.length > 0) {
+          html += `
+            <div class="source-section">
+              <div class="source-header">
+                <div class="source-title"><span class="source-badge realtime">同步</span> 云途安</div>
+                <div class="source-count">${ytMachines.length} 台</div>
+              </div>`;
+
+          // 按合作社分组
+          const groups = {};
+          ytMachines.forEach(m => {
+            const org = m.org_name || m.orgName || '未分组';
+            if (!groups[org]) groups[org] = [];
+            groups[org].push(m);
+          });
+
+          for (const [org, machines] of Object.entries(groups)) {
+            html += `<div style="font-size:13px;color:#666;margin-bottom:6px;padding-left:4px;">${org} (${machines.length}台)</div>`;
+            machines.forEach(m => {
+              html += renderMachineCard(m, 'yuntinan');
+            });
+          }
+          html += '</div>';
+        }
+
+        // 旧供应商设备（导入）
+        if (oldMachines.length > 0) {
+          html += `
+            <div class="source-section">
+              <div class="source-header">
+                <div class="source-title"><span class="source-badge imported">导入</span> 旧供应商</div>
+                <div class="source-count">${oldMachines.length} 台</div>
+              </div>`;
+
+          const groups = {};
+          oldMachines.forEach(m => {
+            const org = m.org_name || '未分组';
+            if (!groups[org]) groups[org] = [];
+            groups[org].push(m);
+          });
+
+          for (const [org, machines] of Object.entries(groups)) {
+            html += `<div style="font-size:13px;color:#666;margin-bottom:6px;padding-left:4px;">${org} (${machines.length}台)</div>`;
+            machines.forEach(m => {
+              html += renderOldMachineCard(m);
+            });
+          }
+          html += '</div>';
+        }
+
+        if (!html) {
+          html = '<div class="empty-state"><div class="icon">📭</div><div class="text">暂无设备数据</div></div>';
+        }
+
+        container.innerHTML = html;
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">❌</div><div class="text">加载失败: ${e.message}</div></div>`;
+      }
+    }
+
+    function renderMachineCard(m, source) {
+      const plate = m.plate_no || m.plateNo || m.tNo || m.tNumber || '未命名';
+      const driver = m.driver_name || m.driverName || m.name || '';
+      const acre = m.total_acre || m.yearAcre || m.acres || 0;
+      const status = m.status || '离线';
+      const isOnline = status.includes('在线') || status.includes('online');
+
+      return `
+        <div class="machine-card" onclick="showMachineDetail('${m.t_number || m.id}', '${m.t_number || m.tNumber}', '${source}')">
+          <div class="top">
+            <div class="plate">${plate}</div>
+            <div class="status ${isOnline ? 'online' : 'offline'}">${isOnline ? '● 在线' : '○ 离线'}</div>
+          </div>
+          <div class="info">
+            ${driver ? `<span>👤 ${driver}</span>` : ''}
+            <span>🔢 ${m.t_number || m.tNumber || ''}</span>
+          </div>
+          <div class="acre">${formatAcre(acre)} <small>亩/年</small></div>
+        </div>`;
+    }
+
+    function renderOldMachineCard(m) {
+      const plate = m.plate_no || '';
+      const tNumber = m.t_number || '';
+      const driver = m.driver_name || '';
+      const hasPlate = plate && plate !== tNumber; // 有独立车牌号
+
+      return `
+        <div class="machine-card">
+          <div class="top">
+            <div>
+              <div class="plate">${hasPlate ? plate : tNumber}</div>
+              ${hasPlate ? `<div style="font-size:11px;color:#999;margin-top:2px;">终端: ${tNumber}</div>` : ''}
+            </div>
+            <span class="old-tag">导入</span>
+          </div>
+          <div class="info">
+            ${driver ? `<span>👤 ${driver}</span>` : ''}
+            ${m.org_name ? `<span>🏢 ${m.org_name}</span>` : ''}
+            ${m.machine_type ? `<span>🔧 ${m.machine_type}</span>` : ''}
+          </div>
+          ${m.year_acre > 0 ? `<div class="acre">${formatAcre(m.year_acre)} <small>亩/年</small></div>` : ''}
+          ${m.updated_at ? `<div class="source-tag">更新于 ${m.updated_at}</div>` : ''}
+        </div>`;
+    }
+
+    // ===================== 设备详情 =====================
+    async function showMachineDetail(id, tNumber, source) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.tab-nav .tab').forEach(t => t.classList.remove('active'));
+      document.getElementById('page-detail').classList.add('active');
+
+      const container = document.getElementById('detail-content');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div><br>加载中...</div>';
+
+      try {
+        if (source === 'yuntinan') {
+          const [detailRes, monitorRes] = await Promise.all([
+            fetch(`${API}/api/machines/${id}`).then(r => r.json()),
+            fetch(`${API}/api/monitor?tNumber=${tNumber}`).then(r => r.json()).catch(() => ({ data: [] }))
+          ]);
+
+          const m = detailRes.data || {};
+          const monitor = (monitorRes.data || [])[0] || {};
+
+          container.innerHTML = `
+            <div class="detail-header">
+              <div class="back" onclick="switchTab('machines')">← 返回设备列表</div>
+              <div class="plate">${m.plateNo || m.tNo || tNumber}</div>
+              <div class="meta">
+                <span>👤 ${m.driverName || '未知'}</span>
+                <span>🏢 ${m.orgName || '未知'}</span>
+                <span>🔢 ${tNumber}</span>
+              </div>
+            </div>
+
+            ${monitor.lat ? `
+            <div class="admin-card" style="margin-top:12px;">
+              <h3>📍 实时位置</h3>
+              <div style="font-size:13px;color:#666;margin-bottom:4px;">
+                ${monitor.location || '未知'} | 速度: ${monitor.speed || 0} km/h
+                ${monitor.work_type_label ? ' | ' + monitor.work_type_label : ''}
+              </div>
+              <div id="detailMap" style="width:100%;height:200px;border-radius:8px;background:#e8e8e8;"></div>
+            </div>` : ''}
+
+            <div class="admin-card">
+              <h3>📊 年度面积</h3>
+              <div style="font-size:28px;font-weight:700;color:#1a73e8;">
+                ${formatAcre(m.yearAcre || m.acres || 0)} <span style="font-size:14px;color:#999;">亩</span>
+              </div>
+            </div>
+
+            <div class="admin-card">
+              <h3>📋 作业记录</h3>
+              <div style="display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px;" id="workTypeTabs"></div>
+              <div id="acreRecords"><div class="loading"><div class="spinner"></div></div></div>
+            </div>
+          `;
+
+          // 加载作业类型
+          const wtRes = await fetch(`${API}/api/work-types`).then(r => r.json());
+          const workTypes = (wtRes.data || []).filter(t => t.db);
+          const tabsHtml = workTypes.map((t, i) =>
+            `<div class="type-btn ${i === 0 ? 'active' : ''}" style="min-width:80px;" onclick="loadAcreRecords('${tNumber}', '${t.db}', this)">${t.label || t.workType || t.db}</div>`
+          ).join('');
+          document.getElementById('workTypeTabs').innerHTML = tabsHtml;
+
+          if (workTypes.length > 0) {
+            await loadAcreRecords(tNumber, workTypes[0].db);
+          }
+
+          // 初始化详情地图
+          if (monitor.lat) {
+            setTimeout(() => {
+              try {
+                const map = new AMap.Map('detailMap', {
+                  center: [monitor.lng || 114.2, monitor.lat || 39.3],
+                  zoom: 14,
+                  viewMode: '2D'
+                });
+                new AMap.Marker({ position: [monitor.lng || 114.2, monitor.lat || 39.3], map });
+              } catch(e) { console.warn('地图加载失败', e); }
+            }, 300);
+          }
+        }
+      } catch (e) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">❌</div><div class="text">加载失败: ${e.message}</div>
+          <button class="btn btn-secondary mt-12" onclick="switchTab('machines')">返回</button></div>`;
+      }
+    }
+
+    async function loadAcreRecords(tNumber, workType, tabEl) {
+      if (tabEl) {
+        tabEl.parentElement.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+        tabEl.classList.add('active');
+      }
+
+      const container = document.getElementById('acreRecords');
+      container.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+      try {
+        const res = await fetch(`${API}/api/machines/0/acre?workType=${workType}&tNumber=${tNumber}`).then(r => r.json());
+        const records = res.data || [];
+
+        if (records.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="text">暂无作业记录</div></div>';
+          return;
+        }
+
+        container.innerHTML = records.map(r => {
+          const date = r.workDate || '';
+          const parts = date.split('-');
+          return `
+            <div class="record-item">
+              <div class="date">
+                <div class="day">${parts[2] || '--'}</div>
+                <div class="month">${parts[0] || ''}-${parts[1] || ''}</div>
+              </div>
+              <div class="detail">
+                <div class="type">作业面积</div>
+                <div class="area">${formatAcre(r.acre)} <small>亩</small></div>
+                ${r.okAcre > 0 ? `<div class="ok-area">达标 ${formatAcre(r.okAcre)} 亩</div>` : ''}
+                ${r.duration > 0 ? `<div class="text-muted">时长 ${Math.round(r.duration / 60)}分钟</div>` : ''}
+                <button class="btn btn-secondary" style="margin-top:8px;padding:4px 12px;font-size:12px;" 
+                  onclick="showTrack('${tNumber}', '${date}')">📍 查看轨迹</button>
+              </div>
+            </div>`;
+        }).join('');
+      } catch (e) {
+        container.innerHTML = `<div class="text-muted">加载失败: ${e.message}</div>`;
+      }
+    }
+
+    // ===================== 实时监控 =====================
+    async function loadMonitor() {
+      try {
+        const res = await fetch(`${API}/api/monitor`).then(r => r.json());
+        const data = res.data || [];
+
+        document.getElementById('monitor-total').textContent = data.length;
+
+        const online = data.filter(m => (m.status || '').includes('在线'));
+        const list = document.getElementById('monitor-list');
+        list.innerHTML = data.map(m => {
+          const isOnline = (m.status || '').includes('在线');
+          return `
+            <div class="machine-card" style="margin-bottom:6px;">
+              <div class="top">
+                <div class="plate" style="font-size:14px;">${m.plateNo || m.tNumber}</div>
+                <div class="status ${isOnline ? 'online' : 'offline'}">${isOnline ? '● 在线' : '○ 离线'}</div>
+              </div>
+              <div class="info">
+                ${m.name ? `<span>👤 ${m.name}</span>` : ''}
+                <span>⚡ ${m.speed || 0}km/h</span>
+                ${m.workTypeLabel ? `<span>🌾 ${m.workTypeLabel}</span>` : ''}
+              </div>
+              <div class="source-tag">${m.location || '未知位置'} ${m.acres > 0 ? `| 年度 ${formatAcre(m.acres)}亩` : ''}</div>
+            </div>`;
+        }).join('');
+
+        // 地图
+        if (!monitorMap) {
+          setTimeout(() => initMonitorMap(data), 300);
+        } else {
+          updateMonitorMarkers(data);
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function initMonitorMap(data) {
+      try {
+        monitorMap = new AMap.Map('monitorMap', {
+          center: [114.23, 39.28],
+          zoom: 11,
+          viewMode: '2D'
+        });
+
+        updateMonitorMarkers(data);
+      } catch(e) { console.warn('地图加载失败', e); }
+    }
+
+    function updateMonitorMarkers(data) {
+      if (!monitorMap) return;
+      monitorMarkers.forEach(m => monitorMap.remove(m));
+      monitorMarkers = [];
+
+      data.forEach(m => {
+        if (!m.lat || !m.lng) return;
+        const isOnline = (m.status || '').includes('在线');
+        const marker = new AMap.Marker({
+          position: [m.lng, m.lat],
+          title: m.plateNo || m.tNumber,
+          content: `<div style="width:12px;height:12px;border-radius:50%;background:${isOnline ? '#4caf50' : '#999'};border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);"></div>`,
+          offset: new AMap.Pixel(-6, -6)
+        });
+        marker.setMap(monitorMap);
+        monitorMarkers.push(marker);
+      });
+
+      // 自动适配视野
+      if (monitorMarkers.length > 0) {
+        monitorMap.setFitView(monitorMarkers);
+      }
+    }
+
+    // ===================== 管理后台 =====================
+    function selectImportType(type, el) {
+      importType = type;
+      el.parentElement.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function handleDrop(e) {
+      e.preventDefault();
+      e.currentTarget.classList.remove('dragging');
+      const file = e.dataTransfer.files[0];
+      if (file) processFile(file);
+    }
+
+    function handleFileSelect(e) {
+      const file = e.target.files[0];
+      if (file) processFile(file);
+    }
+
+    async function processFile(file) {
+      if (!file.name.match(/\.(xlsx|xls)$/i)) {
+        alert('请上传 .xlsx 或 .xls 文件');
+        return;
+      }
+
+      uploadedFile = file;
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('importType', importType);
+
+      const previewArea = document.getElementById('preview-area');
+      const resultArea = document.getElementById('import-result');
+      previewArea.style.display = 'none';
+      resultArea.style.display = 'none';
+
+      // 显示预览
+      try {
+        const res = await fetch(`${API}/api/import/preview`, {
+          method: 'POST',
+          body: formData
+        }).then(r => r.json());
+
+        if (res.code !== 0) {
+          alert('预览失败: ' + res.msg);
+          return;
+        }
+
+        previewData = res.data;
+        const sheet = previewData.sheets[0];
+
+        document.getElementById('preview-info').innerHTML = `
+          📄 ${previewData.fileName} | ${previewData.fileSize ? (previewData.fileSize / 1024).toFixed(1) + ' KB' : ''} | 
+          Sheet: ${sheet.sheetName} | 共 <b>${sheet.totalRows}</b> 行
+          ${(sheet.unmatched || []).length > 0 ? `<br>⚠️ 未识别的列: ${(sheet.unmatched || []).join(', ')}` : ''}
+        `;
+
+        // 列映射显示
+        const mappingArea = document.getElementById('mapping-area');
+        const mappedEntries = Object.entries(sheet.mapping);
+        
+        if (sheet.needsManualMapping || mappedEntries.length === 0) {
+          // 需要手动映射：显示每列的下拉框
+          const targetFields = sheet.targetFields || [];
+          mappingArea.innerHTML = `
+            <div style="background:#fff3e0;border-radius:10px;padding:14px;margin-bottom:12px;">
+              <div style="font-size:14px;font-weight:600;color:#e65100;margin-bottom:10px;">⚠️ 请手动选择列映射</div>
+              <div style="font-size:12px;color:#666;margin-bottom:12px;">系统未能自动识别列名，请为每个 Excel 列选择对应的数据字段。</div>
+              ${sheet.headers.map((h, idx) => {
+                const sampleVals = sheet.sampleData ? sheet.sampleData.map(r => r[idx]).join(' / ') : '';
+                // 预选已有映射
+                const existingMap = mappedEntries.find(([en, cn]) => cn === h);
+                const preSelected = existingMap ? existingMap[0] : '';
+                return `
+                  <div class="mapping-row">
+                    <div class="from" style="flex:0 0 35%;">
+                      <div style="font-weight:500;">${h}</div>
+                      <div style="font-size:11px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${sampleVals}</div>
+                    </div>
+                    <div class="arrow">→</div>
+                    <div class="to" style="flex:1;">
+                      <select id="mapping-select-${idx}" data-excel-col="${h}" style="width:100%;padding:6px 10px;border:1px solid ${preSelected ? '#4caf50' : '#ddd'};border-radius:6px;font-size:13px;background:${preSelected ? '#e8f5e9' : '#fff'};">
+                        <option value="">-- 跳过此列 --</option>
+                        ${targetFields.map(f => `<option value="${f.key}" ${preSelected === f.key ? 'selected' : ''}>${f.label}${f.required ? ' *' : ''}</option>`).join('')}
+                      </select>
+                    </div>
+                  </div>`;
+              }).join('')}
+            </div>`;
+        } else {
+          // 自动映射成功，只读展示
+          mappingArea.innerHTML = `
+            <div style="font-size:13px;color:#333;margin-bottom:6px;font-weight:500;">🔗 列映射（自动识别 ${mappedEntries.length} 列）</div>
+            ${mappedEntries.map(([en, cn]) => `
+              <div class="mapping-row">
+                <div class="from">${cn}</div>
+                <div class="arrow">→</div>
+                <div class="to"><input value="${en}" readonly style="width:100%;padding:6px;border:1px solid #4caf50;background:#e8f5e9;border-radius:6px;font-size:12px;"></div>
+              </div>`).join('')}
+            ${(sheet.unmatched || []).length > 0 ? `<div style="font-size:12px;color:#ff9800;margin-top:8px;">💡 未匹配的列: ${(sheet.unmatched || []).join(', ')}</div>` : ''}
+          `;
+        }
+
+        // 预览表格
+        const table = document.getElementById('preview-table');
+        if (sheet.preview.length > 0) {
+          const headers = Object.keys(sheet.preview[0]);
+          table.innerHTML = `
+            <thead><tr>${headers.map(h => 
+              `<th class="${sheet.mapping[h] ? 'mapped' : ((sheet.unmatched || sheet.unmatched || []).includes(h) ? 'unmapped' : '')}">${h}${sheet.mapping[h] ? '<br><small style="color:#4caf50;">→ ' + sheet.mapping[h] + '</small>' : ''}</th>`
+            ).join('')}</tr></thead>
+            <tbody>${sheet.preview.map(row => `
+              <tr>${headers.map(h => `<td>${row[h] ?? ''}</td>`).join('')}</tr>`).join('')}</tbody>`;
+        }
+
+        previewArea.style.display = 'block';
+      } catch (e) {
+        alert('预览失败: ' + e.message);
+      }
+    }
+
+    async function confirmImport() {
+      if (!uploadedFile) return;
+      const btn = document.getElementById('confirmBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ 导入中...';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', uploadedFile);
+        formData.append('importType', importType);
+        
+        // 收集映射关系
+        let mapping = {};
+        if (previewData && previewData.sheets[0]) {
+          const sheet = previewData.sheets[0];
+          if (sheet.needsManualMapping || Object.keys(sheet.mapping).length === 0) {
+            // 手动映射模式：从下拉框收集
+            sheet.headers.forEach((h, idx) => {
+              const sel = document.getElementById('mapping-select-' + idx);
+              if (sel && sel.value) {
+                mapping[sel.value] = h;
+              }
+            });
+            // 检查必填字段
+            if (!mapping['t_number']) {
+              alert('⚠️ 请至少选择"设备号"对应的列，否则无法导入！');
+              btn.disabled = false;
+              btn.textContent = '✅ 确认导入';
+              return;
+            }
+          } else {
+            // 自动映射模式：使用自动检测的映射
+            mapping = previewData.sheets[0].mapping;
+          }
+          formData.append('mapping', JSON.stringify(mapping));
+        }
+
+        const res = await fetch(`${API}/api/import/confirm`, {
+          method: 'POST',
+          body: formData
+        }).then(r => r.json());
+
+        const resultArea = document.getElementById('import-result');
+        if (res.code === 0) {
+          const d = res.data;
+          resultArea.innerHTML = `
+            <div style="background:#e8f5e9;border-radius:12px;padding:16px;">
+              <div style="font-size:18px;font-weight:700;color:#2e7d32;margin-bottom:8px;">✅ 导入完成</div>
+              <div style="font-size:13px;color:#333;">
+                <div>总行数: ${d.totalRows || d.rowCount || 0}</div>
+                <div class="success" style="color:#4caf50;">成功: ${d.successCount || 0}</div>
+                ${d.skipCount ? `<div style="color:#ff9800;">跳过: ${d.skipCount}</div>` : ''}
+                ${d.errorCount ? `<div style="color:#f44336;">失败: ${d.errorCount}</div>` : ''}
+              </div>
+              ${d.errors && d.errors.length > 0 ? `<div style="margin-top:8px;font-size:12px;color:#999;max-height:100px;overflow-y:auto;">${d.errors.join('<br>')}</div>` : ''}
+            </div>`;
+        } else {
+          resultArea.innerHTML = `<div style="background:#ffebee;border-radius:12px;padding:16px;color:#c62828;">❌ 导入失败: ${res.msg}</div>`;
+        }
+        resultArea.style.display = 'block';
+        document.getElementById('preview-area').style.display = 'none';
+
+        // 刷新导入历史
+        loadImportHistory();
+      } catch (e) {
+        alert('导入失败: ' + e.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '✅ 确认导入';
+      }
+    }
+
+    function cancelImport() {
+      uploadedFile = null;
+      previewData = null;
+      document.getElementById('preview-area').style.display = 'none';
+      document.getElementById('import-result').style.display = 'none';
+      document.getElementById('fileInput').value = '';
+    }
+
+    async function loadImportHistory() {
+      const container = document.getElementById('import-history');
+      try {
+        const res = await fetch(`${API}/api/imports`).then(r => r.json());
+        const history = res.data || [];
+
+        if (history.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="text">暂无导入记录</div></div>';
+          return;
+        }
+
+        container.innerHTML = history.map(h => `
+          <div class="import-item">
+            <div class="file-icon">📄</div>
+            <div class="info">
+              <div class="name">${h.file_name || '未知文件'}</div>
+              <div class="meta">${h.created_at || ''} | ${(h.file_size / 1024).toFixed(1)}KB</div>
+            </div>
+            <div class="result">
+              <div class="success">✅ ${h.success_count} 条</div>
+              ${h.error_count > 0 ? `<div class="fail">❌ ${h.error_count} 条</div>` : ''}
+            </div>
+          </div>`).join('');
+      } catch (e) {
+        container.innerHTML = '<div class="text-muted">加载失败</div>';
+      }
+    }
+
+    // ===================== 旧供应商数据同步 =====================
+    
+    // 加载抓取状态
+    async function loadCrawlStatus() {
+      try {
+        const res = await fetch(`${API}/api/old/crawl/status`).then(r => r.json());
+        
+        if (res.code === 0 && res.data) {
+          const log = res.data;
+          const timeEl = document.getElementById('last-crawl-time');
+          const badgeEl = document.getElementById('crawl-status-badge');
+          const infoEl = document.getElementById('crawl-records-info');
+          
+          // 显示时间
+          if (log.started_at) {
+            timeEl.textContent = new Date(log.started_at).toLocaleString('zh-CN');
+          } else {
+            timeEl.textContent = '从未同步';
+          }
+          
+          // 显示状态
+          const statusMap = {
+            'running': { text: '⏳ 同步中', bg: '#fff3e0', color: '#ff9800' },
+            'success': { text: '✅ 成功', bg: '#e8f5e9', color: '#2e7d32' },
+            'failed': { text: '❌ 失败', bg: '#ffebee', color: '#f44336' }
+          };
+          
+          const status = statusMap[log.status] || { text: '未知', bg: '#f0f0f0', color: '#999' };
+          badgeEl.textContent = status.text;
+          badgeEl.style.background = status.bg;
+          badgeEl.style.color = status.color;
+          
+          // 显示记录数
+          if (log.total_records > 0) {
+            infoEl.innerHTML = `新增 ${log.new_records} 条，更新 ${log.update_records} 条`;
+          } else {
+            infoEl.textContent = '';
+          }
+        } else {
+          document.getElementById('last-crawl-time').textContent = '暂无记录';
+        }
+      } catch (e) {
+        console.error('[抓取状态] 加载失败:', e);
+      }
+    }
+    
+    // 触发手动抓取
+    async function triggerOldCrawl() {
+      if (!confirm('确定要立即同步旧供应商数据吗？\n\n将抓取最近7天的作业数据。')) return;
+      
+      try {
+        const res = await fetchWithAuth(`${API}/api/old/crawl`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ days: 7 })
+        });
+        
+        if (res.code === 0) {
+          alert('✅ 抓取任务已启动！\n\n请稍后刷新页面查看同步结果。');
+          // 3秒后刷新状态
+          setTimeout(loadCrawlStatus, 3000);
+        } else {
+          alert('❌ 启动失败: ' + res.msg);
+        }
+      } catch (e) {
+        alert('❌ 请求失败: ' + e.message);
+      }
+    }
+    
+    // 显示抓取日志
+    async function showCrawlLogs() {
+      try {
+        const res = await fetch(`${API}/api/old/crawl/logs?page=1&limit=10`).then(r => r.json());
+        
+        if (res.code === 0 && res.data.length > 0) {
+          const logsHtml = res.data.map(log => {
+            const statusMap = {
+              'running': '⏳ 进行中',
+              'success': '✅ 成功',
+              'failed': '❌ 失败'
+            };
+            const status = statusMap[log.status] || log.status;
+            const time = new Date(log.started_at).toLocaleString('zh-CN');
+            const records = log.total_records > 0 ? `(新增${log.new_records}, 更新${log.update_records})` : '';
+            const error = log.error_msg ? `<br><span style="color:#f44336;">错误: ${log.error_msg}</span>` : '';
+            
+            return `<div style="padding:8px 0;border-bottom:1px solid #f0f0f0;font-size:12px;">
+              <div>${status} | ${time}</div>
+              <div style="color:#666;margin-top:4px;">${records}${error}</div>
+            </div>`;
+          }).join('');
+          
+          alert(`📋 最近10次同步记录:\n\n${logsHtml}`);
+        } else {
+          alert('📭 暂无同步记录');
+        }
+      } catch (e) {
+        alert('❌ 加载日志失败: ' + e.message);
+      }
+    }
+
+    // ===================== 农户管理 =====================
+    let orgOptions = [];
+
+    async function loadOrgOptions() {
+      if (orgOptions.length > 0) return;
+      try {
+        const res = await fetch(`${API}/api/organizations`).then(r => r.json());
+        orgOptions = res.data || [];
+        const sel = document.getElementById('farmer-org');
+        
+        sel.innerHTML = '<option value="">请选择合作社</option>' +
+          orgOptions.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+        
+        console.log(`[合作社列表] 加载 ${orgOptions.length} 个合作社`);
+      } catch (e) { console.warn('加载合作社失败', e); }
+    }
+
+    async function loadFarmerList() {
+      const container = document.getElementById('farmer-list');
+      try {
+        const res = await fetch(`${API}/api/farmers`).then(r => r.json());
+        const farmers = res.data || [];
+
+        if (farmers.length === 0) {
+          container.innerHTML = '<div class="empty-state"><div class="icon">👥</div><div class="text">暂未添加农户</div></div>';
+          return;
+        }
+
+        container.innerHTML = farmers.map(f => `
+          <div class="farmer-item">
+            <div class="avatar">${(f.name || f.phone || '?')[0]}</div>
+            <div class="info">
+              <div class="name-row">
+                <span class="name">${f.name || '未命名'}</span>
+                ${f.enabled ? '' : '<span class="disabled-tag">已禁用</span>'}
+              </div>
+              <div class="phone">${f.phone}</div>
+              <div class="org">${f.org_name || '未关联合作社'}</div>
+            </div>
+            <div class="actions">
+              <button class="toggle-btn" onclick="toggleFarmer(${f.id}, ${f.enabled})">${f.enabled ? '禁用' : '启用'}</button>
+              <button class="edit-btn" onclick="editFarmer(${f.id})">编辑</button>
+              <button class="del-btn" onclick="deleteFarmer(${f.id}, '${f.name || f.phone}')">删除</button>
+            </div>
+          </div>`).join('');
+      } catch (e) {
+        container.innerHTML = '<div class="text-muted">加载失败</div>';
+      }
+    }
+
+    async function showFarmerForm(editId) {
+      await loadOrgOptions();
+      const form = document.getElementById('farmer-form');
+      const addBtn = document.getElementById('farmer-add-btn');
+      form.style.display = 'block';
+      addBtn.style.display = 'none';
+
+      if (editId) {
+        // 编辑模式：填充已有数据
+        const res = await fetch(`${API}/api/farmers`).then(r => r.json());
+        const f = (res.data || []).find(x => x.id === editId);
+        if (f) {
+          document.getElementById('farmer-name').value = f.name || '';
+          document.getElementById('farmer-phone').value = f.phone || '';
+          document.getElementById('farmer-password').value = '';
+          document.getElementById('farmer-org').value = f.org_id || '';
+          document.getElementById('farmer-remark').value = f.remark || '';
+          document.getElementById('farmer-edit-id').value = f.id;
+          document.getElementById('farmer-submit-btn').textContent = '✅ 更新';
+        }
+      } else {
+        // 新增模式：清空表单
+        document.getElementById('farmer-name').value = '';
+        document.getElementById('farmer-phone').value = '';
+        document.getElementById('farmer-password').value = '';
+        document.getElementById('farmer-org').value = '';
+        document.getElementById('farmer-remark').value = '';
+        document.getElementById('farmer-edit-id').value = '';
+        document.getElementById('farmer-submit-btn').textContent = '✅ 保存';
+      }
+    }
+
+    function cancelFarmerForm() {
+      document.getElementById('farmer-form').style.display = 'none';
+      document.getElementById('farmer-add-btn').style.display = 'block';
+    }
+
+    async function submitFarmer() {
+      const name = document.getElementById('farmer-name').value.trim();
+      const phone = document.getElementById('farmer-phone').value.trim();
+      const password = document.getElementById('farmer-password').value.trim();
+      const orgId = document.getElementById('farmer-org').value;
+      const remark = document.getElementById('farmer-remark').value.trim();
+      const editId = document.getElementById('farmer-edit-id').value;
+
+      if (!name) return alert('请输入姓名');
+      if (!phone) return alert('请输入手机号');
+      if (!orgId) return alert('请选择关联合作社');
+
+      const body = { name, phone, org_id: parseInt(orgId), remark };
+      if (password) body.password = password;
+
+      const btn = document.getElementById('farmer-submit-btn');
+      btn.disabled = true;
+
+      try {
+        let res;
+        if (editId) {
+          res = await fetch(`${API}/api/farmers/${editId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          }).then(r => r.json());
+        } else {
+          res = await fetch(`${API}/api/farmers`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          }).then(r => r.json());
+        }
+
+        if (res.code === 0) {
+          cancelFarmerForm();
+          loadFarmerList();
+        } else {
+          alert(res.msg || '操作失败');
+        }
+      } catch (e) {
+        alert('操作失败: ' + e.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function editFarmer(id) {
+      showFarmerForm(id);
+    }
+
+    async function toggleFarmer(id, currentEnabled) {
+      if (!confirm(currentEnabled ? '确定禁用该农户？' : '确定启用该农户？')) return;
+      try {
+        const res = await fetch(`${API}/api/farmers/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled: currentEnabled ? 0 : 1 })
+        }).then(r => r.json());
+        if (res.code === 0) loadFarmerList();
+        else alert(res.msg);
+      } catch (e) { alert('操作失败'); }
+    }
+
+    async function deleteFarmer(id, name) {
+      if (!confirm(`确定删除农户「${name}」？此操作不可恢复。`)) return;
+      try {
+        const res = await fetch(`${API}/api/farmers/${id}`, { method: 'DELETE' }).then(r => r.json());
+        if (res.code === 0) loadFarmerList();
+        else alert(res.msg);
+      } catch (e) { alert('删除失败'); }
+    }
+
+    // ===================== 数据核对 =====================
+    let verifyLoaded = false;
+
+    async function initVerifyPage() {
+      if (!verifyLoaded) {
+        // 初始化日期为当年
+        const y = new Date().getFullYear();
+        document.getElementById('verify-start').value = `${y}-01-01`;
+        document.getElementById('verify-end').value = `${y}-12-31`;
+        // 默认同步日期为昨天
+        const d = new Date();
+        d.setDate(d.getDate() - 1);
+        document.getElementById('sync-date').value = d.toISOString().substring(0, 10);
+        // 加载合作社下拉
+        try {
+          const res = await fetch(`${API}/api/organizations`).then(r => r.json());
+          const orgs = res.data || [];
+          const sel = document.getElementById('verify-org');
+          sel.innerHTML = '<option value="">全部合作社</option>' +
+            orgs.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+        } catch (e) {}
+        verifyLoaded = true;
+      }
+      // 加载同步状态
+      loadSyncStatus();
+      // 自动加载一次
+      loadVerifyData();
+    }
+
+    // ===================== 云途安同步 =====================
+
+    async function loadSyncStatus() {
+      try {
+        const res = await fetch(`${API}/api/sync/status`).then(r => r.json());
+        const { latest, history } = res.data || {};
+
+        // 更新状态徽章
+        const badge = document.getElementById('sync-status-badge');
+        if (latest) {
+          const syncDate = latest.sync_date || '未知日期';
+          if (latest.status === 'success') {
+            badge.style.background = '#e8f5e9';
+            badge.style.color = '#2e7d32';
+            badge.textContent = `✅ ${syncDate} 已同步 ${latest.new_records || 0}+${latest.update_records || 0}条`;
+          } else if (latest.status === 'running') {
+            badge.style.background = '#fff3e0';
+            badge.style.color = '#e65100';
+            badge.textContent = `🔄 ${syncDate} 同步中...`;
+          } else {
+            badge.style.background = '#ffebee';
+            badge.style.color = '#c62828';
+            badge.textContent = `❌ ${syncDate} 同步失败`;
+          }
+        } else {
+          badge.style.background = '#f5f5f5';
+          badge.style.color = '#999';
+          badge.textContent = '⏳ 尚未同步过';
+        }
+
+        // 显示同步历史
+        if (history && history.length > 0) {
+          const histDiv = document.getElementById('sync-history');
+          const histList = document.getElementById('sync-history-list');
+          histDiv.style.display = 'block';
+          histList.innerHTML = history.map(h => {
+            const syncDate = h.sync_date || '未知日期';
+            const statusIcon = h.status === 'success' ? '✅' : h.status === 'running' ? '🔄' : '❌';
+            const detail = h.status === 'success'
+              ? `新增${h.new_records || 0}条 更新${h.update_records || 0}条`
+              : h.status === 'failed' ? (h.error || '失败') : '进行中';
+            return `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f5f5f5;">
+              <span>${statusIcon} ${syncDate}</span>
+              <span style="color:#999;">${detail} · ${h.finished_at || h.started_at || ''}</span>
+            </div>`;
+          }).join('');
+        }
+      } catch (e) {
+        console.log('加载同步状态失败:', e);
+      }
+    }
+
+    async function manualSync() {
+      const date = document.getElementById('sync-date').value;
+      
+      // 确定同步模式
+      let mode = 'recent'; // 默认增量同步（最近7天）
+      if (date) {
+        // 如果选择了具体日期，同步指定日期
+        mode = 'single';
+      }
+
+      const btn = document.getElementById('sync-btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ 同步中...';
+
+      try {
+        const res = await fetch(`${API}/api/sync/yuntinan`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode, date })
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          // 开始轮询同步状态
+          const poll = setInterval(async () => {
+            await loadSyncStatus();
+            const badge = document.getElementById('sync-status-badge');
+            if (!badge.textContent.includes('同步中')) {
+              clearInterval(poll);
+              btn.disabled = false;
+              btn.textContent = '📥 手动同步';
+              // 同步完成后自动刷新数据
+              loadVerifyData();
+            }
+          }, 3000);
+        } else {
+          alert(res.msg || '同步失败');
+          btn.disabled = false;
+          btn.textContent = '📥 手动同步';
+        }
+      } catch (e) {
+        alert('同步请求失败: ' + e.message);
+        btn.disabled = false;
+        btn.textContent = '📥 手动同步';
+      }
+    }
+
+    async function loadVerifyData() {
+      const startDate = document.getElementById('verify-start').value;
+      const endDate = document.getElementById('verify-end').value;
+      const orgId = document.getElementById('verify-org').value;
+
+      // 显示加载状态
+      const queryBtn = document.getElementById('verify-query-btn');
+      queryBtn.disabled = true;
+      queryBtn.textContent = '⏳ 查询中...';
+
+      document.getElementById('vTotalAcre').textContent = '...';
+      document.getElementById('vTotalMachines').textContent = '...';
+      document.getElementById('vTotalRecords').textContent = '...';
+      document.getElementById('vTotalOrgs').textContent = '...';
+      document.getElementById('verify-byOrg').innerHTML = '<div class="loading"><div class="spinner"></div><br>正在从本地数据库查询...</div>';
+      document.getElementById('verify-byType').innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+      document.getElementById('verify-source-card').hidden = true;
+
+      let url = `${API}/api/agri/summary?startDate=${startDate}&endDate=${endDate}`;
+      if (orgId) url += `&orgId=${orgId}`;
+
+      try {
+        const res = await fetch(url).then(r => r.json());
+        const d = res.data;
+
+        if (!d || res.code !== 0) {
+          document.getElementById('verify-byOrg').innerHTML = '<div class="empty-state"><div class="icon">❌</div><div class="text">加载失败: ' + (res.msg || '未知错误') + '</div></div>';
+          document.getElementById('verify-byType').innerHTML = '';
+          return;
+        }
+
+        // 总计
+        document.getElementById('vTotalAcre').textContent = formatNum(d.total.acre);
+        document.getElementById('vTotalMachines').textContent = d.total.machines;
+        document.getElementById('vTotalRecords').textContent = d.total.records;
+        document.getElementById('vTotalOrgs').textContent = (d.byOrg || []).length;
+
+        // 数据来源分布
+        if (d.sources) {
+          const src = d.sources;
+          const srcCard = document.getElementById('verify-source-card');
+          srcCard.hidden = false;
+          const total = (src.old?.acre || 0) + (src.yuntinan?.acre || 0);
+          const oldPct = total > 0 ? ((src.old?.acre || 0) / total * 100).toFixed(1) : 0;
+          const ytPct = total > 0 ? ((src.yuntinan?.acre || 0) / total * 100).toFixed(1) : 0;
+          document.getElementById('verify-source-distribution').innerHTML = `
+            <div style="margin-bottom:8px;">
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+                <span><span class="source-badge realtime">同步</span> 云途安 ${formatNum(src.yuntinan?.acre || 0)}亩 (${src.yuntinan?.records || 0}条)</span>
+                <span>${ytPct}%</span>
+              </div>
+              <div class="progress-bar"><div class="fill blue" style="width:${Math.max(ytPct, 0.5)}%"></div></div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+                <span><span class="source-badge imported">导入</span> 旧供应商 ${formatNum(src.old?.acre || 0)}亩 (${src.old?.records || 0}条)</span>
+                <span>${oldPct}%</span>
+              </div>
+              <div class="progress-bar"><div class="fill orange" style="width:${Math.max(oldPct, 0.5)}%"></div></div>
+            </div>
+          `;
+        }
+
+        // 按合作社（区分耕种管收）
+        const byOrgTypeData = d.byOrgType || [];
+        if (byOrgTypeData.length === 0) {
+          document.getElementById('verify-byOrg').innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="text">所选时间段内暂无数据</div></div>';
+        } else {
+          // 按合作社分组
+          const orgMap = {};
+          byOrgTypeData.forEach(item => {
+            const orgName = item.org_name || '未知合作社';
+            if (!orgMap[orgName]) {
+              orgMap[orgName] = { machine_count: 0, record_count: 0, total_acre: 0, types: {} };
+            }
+            const typeKey = item.work_type_name || '其他';
+            orgMap[orgName].types[typeKey] = (orgMap[orgName].types[typeKey] || 0) + (item.total_acre || 0);
+            orgMap[orgName].machine_count = Math.max(orgMap[orgName].machine_count, item.machine_count || 0);
+            orgMap[orgName].record_count += (item.record_count || 0);
+            orgMap[orgName].total_acre += (item.total_acre || 0);
+          });
+
+          // 按总面积排序
+          const sortedOrgs = Object.entries(orgMap).sort((a, b) => b[1].total_acre - a[1].total_acre);
+          const maxAcre = sortedOrgs.length > 0 ? sortedOrgs[0][1].total_acre : 1;
+
+          let html = '';
+          for (const [orgName, data] of sortedOrgs) {
+            html += `
+              <div style="padding:10px 0;border-bottom:1px solid #f5f5f5;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+                  <div style="flex:1;min-width:0;">
+                    <div style="font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${orgName}</div>
+                    <div style="font-size:12px;color:#999;">${data.machine_count}台设备 · ${data.record_count}条记录</div>
+                  </div>
+                  <div style="text-align:right;margin-left:12px;flex-shrink:0;">
+                    <div style="font-size:16px;font-weight:700;color:#1a73e8;">${formatNum(data.total_acre)}</div>
+                    <div style="font-size:11px;color:#999;">亩</div>
+                  </div>
+                </div>
+                <div class="progress-bar" style="margin-bottom:6px;">
+                  <div class="fill blue" style="width:${(data.total_acre / maxAcre * 100).toFixed(1)}%"></div>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">
+                  ${Object.entries(data.types).sort((a, b) => b[1] - a[1]).map(([typeName, acre]) => {
+                    const shortName = typeName.includes('耕') ? '耕' : 
+                                     typeName.includes('播种') || typeName.includes('种') ? '种' :
+                                     typeName.includes('管') || typeName.includes('植保') ? '管' :
+                                     typeName.includes('收获') || typeName.includes('收') ? '收' : '其他';
+                    const colors = { '耕': '#1a73e8', '种': '#ff9800', '管': '#9c27b0', '收': '#4caf50', '其他': '#666' };
+                    const color = colors[shortName] || '#666';
+                    return `<span style="font-size:12px;padding:2px 8px;border-radius:4px;background:${color}15;color:${color};font-weight:500;">
+                      ${shortName} ${formatNum(acre)}亩
+                    </span>`;
+                  }).join('')}
+                </div>
+              </div>`;
+          }
+          document.getElementById('verify-byOrg').innerHTML = html;
+        }
+
+        // 按作业类型
+        const byTypeData = d.byType || [];
+        if (byTypeData.length === 0) {
+          document.getElementById('verify-byType').innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="text">所选时间段内暂无数据</div></div>';
+        } else {
+          const maxTypeAcre = Math.max(...byTypeData.map(t => t.total_acre), 1);
+          document.getElementById('verify-byType').innerHTML = byTypeData.map(t => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5;">
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:14px;font-weight:500;">${t.work_type_name || '未知类型'}</div>
+                <div style="font-size:12px;color:#999;">${t.machine_count}台设备 · ${t.record_count}条记录</div>
+                <div class="progress-bar" style="margin-top:4px;">
+                  <div class="fill orange" style="width:${(t.total_acre / maxTypeAcre * 100).toFixed(1)}%"></div>
+                </div>
+              </div>
+              <div style="text-align:right;margin-left:12px;flex-shrink:0;">
+                <div style="font-size:16px;font-weight:700;color:#2e7d32;">${formatNum(t.total_acre)}</div>
+                <div style="font-size:11px;color:#999;">亩</div>
+              </div>
+            </div>`).join('');
+        }
+
+      } catch (e) {
+        document.getElementById('verify-byOrg').innerHTML = `<div class="empty-state"><div class="icon">❌</div><div class="text">加载失败: ${e.message}</div></div>`;
+        document.getElementById('verify-byType').innerHTML = '';
+      } finally {
+        queryBtn.disabled = false;
+        queryBtn.textContent = '查询';
+      }
+    }
+
+    function exportVerifyExcel() {
+      const startDate = document.getElementById('verify-start').value;
+      const endDate = document.getElementById('verify-end').value;
+      const orgId = document.getElementById('verify-org').value;
+
+      if (!startDate || !endDate) {
+        alert('请选择日期范围');
+        return;
+      }
+
+      let url = `${API}/api/agri/export?startDate=${startDate}&endDate=${endDate}`;
+      if (orgId) url += `&orgId=${orgId}`;
+
+      // 提示用户（合并数据导出较慢）
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);color:#fff;padding:20px 30px;border-radius:12px;font-size:14px;z-index:9999;text-align:center;';
+      toast.innerHTML = '<div class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:#fff;margin:0 auto 10px;width:30px;height:30px;"></div>正在从本地数据库导出，请稍候...';
+      document.body.appendChild(toast);
+
+      // 用 fetch 先检查是否有数据
+      fetch(url)
+        .then(r => {
+          if (r.headers.get('content-type')?.includes('json')) {
+            return r.json().then(d => { throw new Error(d.msg || '导出失败'); });
+          }
+          document.body.removeChild(toast);
+          // 触发下载
+          const blob = r.blob();
+          const a = document.createElement('a');
+          a.href = url;
+          a.target = '_blank';
+          a.click();
+        })
+        .catch(e => {
+          if (toast.parentNode) document.body.removeChild(toast);
+          alert('导出失败: ' + e.message);
+        });
+    }
+
+    // ===================== 全量数据导出 =====================
+    
+    // 加载导出预览
+    async function loadExportPreview() {
+      try {
+        const sources = [];
+        if (document.getElementById('export-source-yuntinan').checked) sources.push('yuntinan');
+        if (document.getElementById('export-source-old').checked) sources.push('old');
+        
+        if (sources.length === 0) {
+          alert('请至少选择一个数据源');
+          return;
+        }
+
+        const params = new URLSearchParams({
+          startDate: document.getElementById('export-start-date').value || '',
+          endDate: document.getElementById('export-end-date').value || '',
+          sources: sources.join(',')
+        });
+
+        const res = await fetch(`${API}/api/export/preview?${params}`).then(r => r.json());
+        
+        if (res.code !== 0) {
+          alert(res.msg || '获取预览失败');
+          return;
+        }
+
+        const data = res.data;
+        const previewDiv = document.getElementById('export-preview-result');
+        const contentDiv = document.getElementById('export-preview-content');
+        
+        // 构建预览内容
+        let html = '<div style="font-size:12px;">';
+        
+        // 按数据源统计
+        if (data.bySource) {
+          Object.entries(data.bySource).forEach(([source, stats]) => {
+            const sourceName = source === 'yuntinan' ? '云途安' : '旧供应商';
+            html += `<div style="margin-bottom:6px;">• ${sourceName}: <strong>${stats.count}</strong>条, <strong>${formatAcre(stats.acre)}</strong>亩</div>`;
+          });
+        }
+        
+        // 已修复数据
+        if (data.repaired && data.repaired.count > 0) {
+          html += `<div style="margin-bottom:6px;">• 已修复: <strong>${data.repaired.count}</strong>条</div>`;
+        }
+        
+        // 合计
+        html += `<div style="border-top:1px solid #ddd;margin:8px 0;padding-top:8px;font-weight:600;">合计: ${data.total}条, ${formatAcre(data.totalAcre || 0)}亩</div>`;
+        
+        // 日期范围
+        if (data.dateRange && data.dateRange.min) {
+          html += `<div style="color:#999;margin-top:4px;">数据范围: ${data.dateRange.min} 至 ${data.dateRange.max}</div>`;
+        }
+        
+        html += '</div>';
+        
+        contentDiv.innerHTML = html;
+        previewDiv.style.display = 'block';
+
+      } catch (e) {
+        alert('加载预览失败: ' + e.message);
+      }
+    }
+
+    // 导出全量数据
+    async function exportAllRecords(format = 'excel') {
+      try {
+        const sources = [];
+        if (document.getElementById('export-source-yuntinan').checked) sources.push('yuntinan');
+        // 旧设备包括 old 和 old_api 两种类型
+        if (document.getElementById('export-source-old').checked) {
+          sources.push('old');
+          sources.push('old_api');
+        }
+        
+        if (sources.length === 0) {
+          alert('请至少选择一个数据源');
+          return;
+        }
+
+        const startDate = document.getElementById('export-start-date').value;
+        const endDate = document.getElementById('export-end-date').value;
+
+        if (!startDate || !endDate) {
+          alert('请选择日期范围');
+          return;
+        }
+
+        const params = new URLSearchParams({
+          startDate,
+          endDate,
+          sources: sources.join(','),
+          format
+        });
+
+        // 显示加载提示
+        const toast = document.createElement('div');
+        toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.7);color:#fff;padding:20px 30px;border-radius:12px;font-size:14px;z-index:9999;text-align:center;';
+        toast.innerHTML = '<div class="spinner" style="border-color:rgba(255,255,255,0.3);border-top-color:#fff;margin:0 auto 10px;width:30px;height:30px;"></div>正在导出全量数据，请稍候...';
+        document.body.appendChild(toast);
+
+        try {
+          const url = `${API}/api/export/all-records?${params}`;
+          
+          const response = await fetch(url);
+          
+          if (response.headers.get('content-type')?.includes('json')) {
+            const data = await response.json();
+            throw new Error(data.msg || '导出失败');
+          }
+
+          // 触发文件下载
+          const blob = await response.blob();
+          const a = document.createElement('a');
+          a.href = window.URL.createObjectURL(blob);
+          a.download = `全量作业数据_${startDate}_${endDate}.${format === 'csv' ? 'csv' : 'xlsx'}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          window.URL.revokeObjectURL(a.href);
+
+          document.body.removeChild(toast);
+          alert('✅ 导出成功！');
+
+        } catch (e) {
+          if (toast.parentNode) document.body.removeChild(toast);
+          alert('导出失败: ' + e.message);
+        }
+
+      } catch (e) {
+        alert('导出失败: ' + e.message);
+      }
+    }
+
+    // ===================== 工具函数 =====================
+    function formatAcre(n) {
+      if (!n && n !== 0) return '0';
+      return parseFloat(n).toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+    }
+
+    function formatNum(n) {
+      if (!n && n !== 0) return '0';
+      return parseFloat(n).toLocaleString('zh-CN', { maximumFractionDigits: 1 });
+    }
+
+    // ===================== 看板日期过滤 =====================
+    let currentDateFilter = { startDate: '', endDate: '' };
+
+    function initDateFilter() {
+      // 默认设置为当年数据
+      const today = new Date();
+      const yearStart = new Date(today.getFullYear(), 0, 1);
+      
+      const startDate = formatDate(yearStart);
+      const endDate = formatDate(today);
+      
+      document.getElementById('dashboard-start-date').value = startDate;
+      document.getElementById('dashboard-end-date').value = endDate;
+      
+      currentDateFilter = { startDate, endDate };
+      updateDateRangeDisplay();
+    }
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function setDateRange(type) {
+      const today = new Date();
+      let startDate, endDate;
+      
+      switch(type) {
+        case 'today':
+          startDate = endDate = formatDate(today);
+          break;
+        case 'month':
+          const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+          startDate = formatDate(monthStart);
+          endDate = formatDate(today);
+          break;
+        case 'year':
+          const yearStart = new Date(today.getFullYear(), 0, 1);
+          startDate = formatDate(yearStart);
+          endDate = formatDate(today);
+          break;
+      }
+      
+      document.getElementById('dashboard-start-date').value = startDate;
+      document.getElementById('dashboard-end-date').value = endDate;
+    }
+
+    function applyDateFilter() {
+      const startDate = document.getElementById('dashboard-start-date').value;
+      const endDate = document.getElementById('dashboard-end-date').value;
+      
+      if (!startDate || !endDate) {
+        alert('请选择开始和结束日期');
+        return;
+      }
+      
+      if (new Date(startDate) > new Date(endDate)) {
+        alert('开始日期不能晚于结束日期');
+        return;
+      }
+      
+      currentDateFilter = { startDate, endDate };
+      updateDateRangeDisplay();
+      loadDashboard(); // 重新加载看板数据
+    }
+
+    function updateDateRangeDisplay() {
+      const display = document.getElementById('current-date-range');
+      if (currentDateFilter.startDate && currentDateFilter.endDate) {
+        display.textContent = `📊 当前显示: ${currentDateFilter.startDate} 至 ${currentDateFilter.endDate}`;
+      } else {
+        display.textContent = '📊 当前显示: 全部数据';
+      }
+    }
+
+    // ===================== 设备轨迹 =====================
+    async function showTrack(tNumber, workDate) {
+      // 创建轨迹弹窗
+      const modal = document.createElement('div');
+      modal.id = 'track-modal';
+      modal.style.cssText = `
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.5); z-index: 1000;
+        display: flex; align-items: center; justify-content: center;
+      `;
+      
+      modal.innerHTML = `
+        <div style="background:white;border-radius:12px;width:90%;max-width:800px;max-height:90vh;overflow:auto;padding:20px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <h3 style="margin:0;">📍 作业轨迹 - ${tNumber} (${workDate})</h3>
+            <button onclick="document.getElementById('track-modal').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;">&times;</button>
+          </div>
+          <div id="track-map" style="width:100%;height:400px;border-radius:8px;background:#e8e8e8;margin-bottom:12px;"></div>
+          <div id="track-info" style="font-size:13px;color:#666;text-align:center;">加载中...</div>
+        </div>
+      `;
+      
+      document.body.appendChild(modal);
+      
+      try {
+        // 1. 先从数据库获取轨迹
+        let res = await fetch(`${API}/api/tracks?tNumber=${tNumber}&workDate=${workDate}`).then(r => r.json());
+        let tracks = res.data || [];
+        
+        // 2. 如果数据库没有，尝试从 API 同步
+        if (tracks.length === 0) {
+          document.getElementById('track-info').textContent = '数据库中无轨迹数据，正在从云途安 API 同步...';
+          
+          const syncRes = await fetch(`${API}/api/tracks/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tNumber, workDate })
+          }).then(r => r.json());
+          
+          if (syncRes.code === 0) {
+            tracks = syncRes.data || [];
+            document.getElementById('track-info').textContent = `同步成功！共 ${tracks.length} 个轨迹点`;
+          } else {
+            throw new Error(syncRes.msg || '同步失败');
+          }
+        } else {
+          document.getElementById('track-info').textContent = `从数据库加载，共 ${tracks.length} 个轨迹点`;
+        }
+        
+        // 3. 在地图上显示轨迹
+        if (tracks.length > 0) {
+          setTimeout(() => {
+            try {
+              const map = new AMap.Map('track-map', {
+                zoom: 13,
+                viewMode: '2D'
+              });
+              
+              // 绘制轨迹线
+              const path = tracks.map(t => [t.longitude, t.latitude]);
+              const polyline = new AMap.Polyline({
+                path: path,
+                strokeColor: '#1a73e8',
+                strokeWeight: 4,
+                strokeOpacity: 0.8
+              });
+              map.add(polyline);
+              
+              // 添加起点和终点标记
+              new AMap.Marker({
+                position: path[0],
+                map: map,
+                label: { content: '起点', offset: new AMap.Pixel(0, -30) }
+              });
+              
+              new AMap.Marker({
+                position: path[path.length - 1],
+                map: map,
+                label: { content: '终点', offset: new AMap.Pixel(0, -30) }
+              });
+              
+              // 自适应视野
+              map.setFitView();
+              
+              // 统计信息
+              const totalDistance = calculateDistance(path);
+              const avgSpeed = tracks.reduce((sum, t) => sum + (t.speed || 0), 0) / tracks.length;
+              
+              document.getElementById('track-info').innerHTML = `
+                <div style="display:flex;justify-content:space-around;flex-wrap:wrap;gap:12px;">
+                  <div>📍 轨迹点数: <strong>${tracks.length}</strong></div>
+                  <div>📏 总距离: <strong>${totalDistance.toFixed(2)} km</strong></div>
+                  <div>⚡ 平均速度: <strong>${avgSpeed.toFixed(1)} km/h</strong></div>
+                  <div>⏱️ 时间跨度: <strong>${formatTimeSpan(tracks[0].track_time, tracks[tracks.length-1].track_time)}</strong></div>
+                </div>
+              `;
+            } catch(e) {
+              console.error('地图加载失败:', e);
+              document.getElementById('track-info').textContent = '地图加载失败: ' + e.message;
+            }
+          }, 100);
+        } else {
+          document.getElementById('track-info').textContent = '该设备当天无轨迹数据';
+        }
+      } catch (e) {
+        document.getElementById('track-info').textContent = '加载失败: ' + e.message;
+      }
+    }
+    
+    // 计算轨迹总距离（单位：km）
+    function calculateDistance(points) {
+      let total = 0;
+      for (let i = 1; i < points.length; i++) {
+        total += getDistance(points[i-1][0], points[i-1][1], points[i][0], points[i][1]);
+      }
+      return total;
+    }
+    
+    // Haversine 公式计算两点间距离
+    function getDistance(lon1, lat1, lon2, lat2) {
+      const R = 6371; // 地球半径 km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+    
+    // 格式化时间跨度
+    function formatTimeSpan(startTime, endTime) {
+      if (!startTime || !endTime) return '未知';
+      const start = new Date(startTime);
+      const end = new Date(endTime);
+      const diff = (end - start) / 1000; // 秒
+      
+      if (diff < 60) return `${Math.round(diff)}秒`;
+      if (diff < 3600) return `${Math.round(diff / 60)}分钟`;
+      return `${Math.round(diff / 3600)}小时${Math.round((diff % 3600) / 60)}分钟`;
+    }
+
+    // ===================== 初始化 =====================
+    document.addEventListener('DOMContentLoaded', () => {
+      showLoginModal(); // 显示登录弹窗
+      initDateFilter(); // 初始化日期过滤器（默认当年）
+      // 安全网：3秒后如果看板还是空的，强制加载一次
+      setTimeout(() => {
+        const grid = document.getElementById('stats-grid');
+        if (!grid || grid.children.length === 0 || grid.querySelector('.loading')) {
+          console.warn('Dashboard not loaded, retrying...');
+          loadDashboard();
+        }
+      }, 3000);
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>数据修复管理 - 智慧农机监管平台</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@4/lib/index.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f0f2f5; color: #333; }
+
+    /* 顶部导航 */
+    .header { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: #fff; padding: 12px 16px; position: sticky; top: 0; z-index: 100; }
+    .header h1 { font-size: 18px; font-weight: 600; }
+    .header .subtitle { font-size: 12px; opacity: 0.8; margin-top: 2px; }
+    .header .back-btn { display: inline-block; margin-right: 8px; cursor: pointer; font-size: 14px; opacity: 0.9; }
+
+    /* 筛选栏 */
+    .filter-bar { background: #fff; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .filter-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; flex-wrap: wrap; }
+    .filter-row:last-child { margin-bottom: 0; }
+    .filter-label { font-size: 13px; color: #666; min-width: 60px; }
+    .filter-input { flex: 1; min-width: 100px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; }
+    .filter-select { flex: 1; min-width: 100px; padding: 8px 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 13px; background: #fff; }
+
+    /* 操作按钮栏 */
+    .action-bar { background: #fff; padding: 12px; margin-bottom: 12px; display: flex; gap: 8px; justify-content: space-between; align-items: center; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { padding: 8px 16px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn-primary { background: #1a73e8; color: #fff; }
+    .btn-primary:hover { background: #1557b0; }
+    .btn-secondary { background: #f5f5f5; color: #333; }
+    .btn-success { background: #4caf50; color: #fff; }
+    .btn-danger { background: #f44336; color: #fff; }
+    .btn-warning { background: #ff9800; color: #fff; }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* 统计信息 */
+    .stats-info { background: #fff; padding: 12px; margin-bottom: 12px; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; }
+    .stat-item .label { font-size: 11px; color: #999; margin-bottom: 4px; }
+    .stat-item .value { font-size: 18px; font-weight: 700; color: #1a73e8; }
+    .stat-item .value.orange { color: #ff9800; }
+    .stat-item .value.green { color: #4caf50; }
+    .stat-item .value.red { color: #f44336; }
+
+    /* 数据表格 */
+    .table-container { background: #fff; border-radius: 12px; overflow-x: auto; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .data-table th { background: #f5f7fa; padding: 10px 8px; text-align: left; white-space: nowrap; font-weight: 600; color: #333; border-bottom: 2px solid #e0e0e0; position: sticky; top: 0; }
+    .data-table td { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
+    .data-table tr:hover { background: #f5f9ff; }
+    .data-table tr.modified { background: #fff8e1; }
+    .data-table tr.deleted { background: #ffebee; opacity: 0.7; }
+
+    /* 状态标签 */
+    .status-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+    .status-valid { background: #e8f5e9; color: #2e7d32; }
+    .status-deleted { background: #ffebee; color: #c62828; }
+    .modified-tag { background: #fff3e0; color: #e65100; padding: 2px 6px; border-radius: 8px; font-size: 10px; margin-left: 4px; }
+
+    /* 分页 */
+    .pagination { background: #fff; padding: 12px; margin-top: 12px; display: flex; justify-content: space-between; align-items: center; border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .page-info { font-size: 13px; color: #666; }
+    .page-controls { display: flex; gap: 8px; align-items: center; }
+    .page-btn { padding: 6px 12px; border: 1px solid #ddd; background: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .page-btn.active { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+
+    /* 复选框列 */
+    .checkbox-col { width: 40px; text-align: center; }
+
+    /* 空状态 */
+    .empty-state { text-align: center; padding: 60px 20px; color: #999; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state .text { font-size: 14px; }
+
+    /* 加载中 */
+    .loading { text-align: center; padding: 40px; color: #999; }
+    .loading .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #ddd; border-top-color: #1a73e8; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* 对话框样式 */
+    .dialog-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: none; align-items: center; justify-content: center; }
+    .dialog-overlay.show { display: flex; }
+    .dialog-content { background: #fff; border-radius: 16px; width: 90%; max-width: 600px; max-height: 90vh; overflow-y: auto; padding: 24px; }
+    .dialog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .dialog-title { font-size: 18px; font-weight: 600; }
+    .dialog-close { font-size: 24px; cursor: pointer; color: #999; line-height: 1; }
+    .dialog-close:hover { color: #333; }
+
+    /* 表单字段 */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500; }
+    .form-input { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; }
+    .form-input:focus { border-color: #1a73e8; outline: none; }
+    .form-textarea { width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; min-height: 80px; resize: vertical; }
+    .form-hint { font-size: 11px; color: #999; margin-top: 4px; }
+    .readonly-field { background: #f5f5f5; color: #666; cursor: not-allowed; }
+
+    /* 双值对比显示 */
+    .value-compare { display: flex; gap: 12px; align-items: center; }
+    .value-old { font-size: 12px; color: #999; text-decoration: line-through; }
+    .value-new { font-size: 14px; font-weight: 600; color: #1a73e8; }
+    .arrow-icon { color: #999; }
+
+    /* Toast提示 */
+    .toast { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.75); color: #fff; padding: 16px 24px; border-radius: 12px; font-size: 14px; z-index: 2000; display: none; }
+    .toast.show { display: block; }
+  </style>
+</head>
+<body>
+  <!-- 顶部 -->
+  <div class="header">
+    <div><span class="back-btn" onclick="window.location.href='index.html'">← 返回</span>🔧 数据修复管理</div>
+    <div class="subtitle">API原始数据存储与优化 · 支持增删改查和批量操作</div>
+  </div>
+
+  <!-- 筛选栏 -->
+  <div class="filter-bar">
+    <div class="filter-row">
+      <span class="filter-label">时间范围</span>
+      <input type="date" id="filter-start-date" class="filter-input">
+      <span style="color:#999;">至</span>
+      <input type="date" id="filter-end-date" class="filter-input">
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">合作社</span>
+      <select id="filter-org" class="filter-select">
+        <option value="">全部合作社</option>
+      </select>
+      <span class="filter-label" style="margin-left:12px;">作业类型</span>
+      <select id="filter-type" class="filter-select">
+        <option value="">全部类型</option>
+        <option value="耕">耕</option>
+        <option value="种">种</option>
+        <option value="管">管</option>
+        <option value="收">收</option>
+      </select>
+    </div>
+    <div class="filter-row">
+      <span class="filter-label">设备号</span>
+      <input type="text" id="filter-tNumber" class="filter-input" placeholder="输入终端号">
+      <span class="filter-label" style="margin-left:12px;">状态</span>
+      <select id="filter-status" class="filter-select">
+        <option value="">全部</option>
+        <option value="1">有效</option>
+        <option value="0">已删除</option>
+      </select>
+      <select id="filter-modified" class="filter-select">
+        <option value="">修改状态</option>
+        <option value="1">已修改</option>
+        <option value="0">未修改</option>
+      </select>
+    </div>
+    <div class="filter-row" style="justify-content:flex-end;margin-top:8px;">
+      <button class="btn btn-secondary" onclick="resetFilters()">重置</button>
+      <button class="btn btn-primary" onclick="loadData()">🔍 查询</button>
+    </div>
+  </div>
+
+  <!-- 操作按钮栏 -->
+  <div class="action-bar">
+    <div class="btn-group">
+      <button class="btn btn-success btn-sm" onclick="exportDetails()">📥 导出明细</button>
+      <button class="btn btn-warning btn-sm" onclick="batchModifyOrg()" id="batch-org-btn" disabled>批量修改合作社</button>
+      <button class="btn btn-danger btn-sm" onclick="batchDelete()" id="batch-delete-btn" disabled>批量删除</button>
+      <button class="btn btn-secondary btn-sm" onclick="batchRestore()" id="batch-restore-btn" disabled>批量恢复</button>
+    </div>
+    <div style="font-size:12px;color:#999;">
+      已选择 <strong id="selected-count">0</strong> 条记录
+    </div>
+  </div>
+
+  <!-- 统计信息 -->
+  <div class="stats-info">
+    <div class="stats-grid">
+      <div class="stat-item">
+        <div class="label">总记录数</div>
+        <div class="value" id="stat-total">-</div>
+      </div>
+      <div class="stat-item">
+        <div class="label">有效记录</div>
+        <div class="value green" id="stat-valid">-</div>
+      </div>
+      <div class="stat-item">
+        <div class="label">已修改</div>
+        <div class="value orange" id="stat-modified">-</div>
+      </div>
+      <div class="stat-item">
+        <div class="label">已删除</div>
+        <div class="value red" id="stat-deleted">-</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 数据表格 -->
+  <div class="table-container">
+    <table class="data-table" id="data-table">
+      <thead>
+        <tr>
+          <th class="checkbox-col"><input type="checkbox" id="select-all" onchange="toggleSelectAll()"></th>
+          <th>序号</th>
+          <th>设备号</th>
+          <th>作业日期</th>
+          <th>作业类型</th>
+          <th>作业面积(亩)</th>
+          <th>达标面积(亩)</th>
+          <th>车牌号</th>
+          <th>机手</th>
+          <th>合作社</th>
+          <th>状态</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr>
+          <td colspan="12">
+            <div class="loading">
+              <div class="spinner"></div>
+              <div>加载中...</div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 分页 -->
+  <div class="pagination">
+    <div class="page-info">
+      第 <strong id="current-page">1</strong> / <strong id="total-pages">1</strong> 页，共 <strong id="total-records">0</strong> 条记录
+    </div>
+    <div class="page-controls">
+      <button class="page-btn" onclick="goToPage(1)" id="first-page">首页</button>
+      <button class="page-btn" onclick="goToPage(currentPage - 1)" id="prev-page">上一页</button>
+      <button class="page-btn" onclick="goToPage(currentPage + 1)" id="next-page">下一页</button>
+      <button class="page-btn" onclick="goToPage(totalPages)" id="last-page">末页</button>
+      <select id="page-size" class="filter-select" style="min-width:80px;" onchange="changePageSize()">
+        <option value="20">20条/页</option>
+        <option value="50" selected>50条/页</option>
+        <option value="100">100条/页</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- 编辑对话框 -->
+  <div class="dialog-overlay" id="edit-dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <div class="dialog-title">✏️ 编辑记录</div>
+        <div class="dialog-close" onclick="closeEditDialog()">&times;</div>
+      </div>
+      <div id="edit-form">
+        <div class="form-group">
+          <label class="form-label">设备号（只读）</label>
+          <input type="text" id="edit-t-number" class="form-input readonly-field" readonly>
+        </div>
+        <div class="form-group">
+          <label class="form-label">作业日期（只读）</label>
+          <input type="text" id="edit-work-date" class="form-input readonly-field" readonly>
+        </div>
+        <div class="form-group">
+          <label class="form-label">作业类型（只读）</label>
+          <input type="text" id="edit-work-type" class="form-input readonly-field" readonly>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">作业面积（亩）</label>
+          <div class="value-compare">
+            <span class="value-old" id="old-acre"></span>
+            <span class="arrow-icon">→</span>
+            <input type="number" id="edit-acre" class="form-input" step="0.01" min="0">
+          </div>
+          <div class="form-hint">API原始值 vs 当前可编辑值</div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">达标面积（亩）</label>
+          <div class="value-compare">
+            <span class="value-old" id="old-ok-acre"></span>
+            <span class="arrow-icon">→</span>
+            <input type="number" id="edit-ok-acre" class="form-input" step="0.01" min="0">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">车牌号</label>
+          <div class="value-compare">
+            <span class="value-old" id="old-plate-no"></span>
+            <span class="arrow-icon">→</span>
+            <input type="text" id="edit-plate-no" class="form-input">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">机手姓名</label>
+          <div class="value-compare">
+            <span class="value-old" id="old-driver-name"></span>
+            <span class="arrow-icon">→</span>
+            <input type="text" id="edit-driver-name" class="form-input">
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">合作社</label>
+          <select id="edit-org-id" class="form-input">
+            <option value="">请选择合作社</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label class="form-label">备注说明</label>
+          <textarea id="edit-remark" class="form-textarea" placeholder="请说明修改原因..."></textarea>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:20px;">
+        <button class="btn btn-secondary" onclick="closeEditDialog()" style="flex:1;">取消</button>
+        <button class="btn btn-primary" onclick="saveEdit()" style="flex:2;" id="save-btn">💾 保存修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 批量修改合作社对话框 -->
+  <div class="dialog-overlay" id="batch-org-dialog">
+    <div class="dialog-content" style="max-width:400px;">
+      <div class="dialog-header">
+        <div class="dialog-title">🏢 批量修改合作社</div>
+        <div class="dialog-close" onclick="closeBatchOrgDialog()">&times;</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">选择目标合作社</label>
+        <select id="batch-org-select" class="form-input">
+          <option value="">请选择合作社</option>
+        </select>
+      </div>
+      <div style="font-size:12px;color:#999;margin-bottom:16px;">
+        将为选中的 <strong id="batch-count">0</strong> 条记录统一设置合作社
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="closeBatchOrgDialog()" style="flex:1;">取消</button>
+        <button class="btn btn-primary" onclick="confirmBatchOrg()" style="flex:2;">✅ 确认修改</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast提示 -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API = '';
+    let currentPage = 1;
+    let totalPages = 1;
+    let pageSize = 50;
+    let totalRecords = 0;
+    let currentData = [];
+    let selectedIds = new Set();
+    let orgOptions = [];
+    let editingId = null;
+
+    // ===================== 初始化 =====================
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadOrgOptions();
+      initDateFilter();
+      loadData();
+    });
+
+    function initDateFilter() {
+      const today = new Date();
+      const yearStart = new Date(today.getFullYear(), 0, 1);
+      const formatDate = (d) => d.toISOString().split('T')[0];
+      
+      document.getElementById('filter-start-date').value = formatDate(yearStart);
+      document.getElementById('filter-end-date').value = formatDate(today);
+    }
+
+    // ===================== 加载合作社选项 =====================
+    async function loadOrgOptions() {
+      try {
+        const res = await fetch(`${API}/api/organizations`).then(r => r.json());
+        orgOptions = res.data || [];
+        
+        // 填充筛选下拉框
+        const filterOrg = document.getElementById('filter-org');
+        filterOrg.innerHTML = '<option value="">全部合作社</option>' +
+          orgOptions.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+        
+        // 填充编辑对话框下拉框
+        const editOrg = document.getElementById('edit-org-id');
+        editOrg.innerHTML = '<option value="">请选择合作社</option>' +
+          orgOptions.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+        
+        // 填充批量修改下拉框
+        const batchOrg = document.getElementById('batch-org-select');
+        batchOrg.innerHTML = '<option value="">请选择合作社</option>' +
+          orgOptions.map(o => `<option value="${o.id}">${o.name}</option>`).join('');
+      } catch (e) {
+        console.error('加载合作社失败:', e);
+      }
+    }
+
+    // ===================== 加载数据 =====================
+    async function loadData(page = 1) {
+      currentPage = page;
+      
+      const tbody = document.getElementById('table-body');
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="12">
+            <div class="loading">
+              <div class="spinner"></div>
+              <div>加载中...</div>
+            </div>
+          </td>
+        </tr>
+      `;
+
+      try {
+        const params = new URLSearchParams({
+          page: currentPage,
+          pageSize: pageSize,
+          startDate: document.getElementById('filter-start-date').value,
+          endDate: document.getElementById('filter-end-date').value,
+          tNumber: document.getElementById('filter-tNumber').value,
+          workType: document.getElementById('filter-type').value,
+          orgId: document.getElementById('filter-org').value,
+          status: document.getElementById('filter-status').value,
+          isModified: document.getElementById('filter-modified').value
+        });
+
+        const res = await fetch(`${API}/api/raw-records?${params}`).then(r => r.json());
+        
+        if (res.code !== 0) {
+          throw new Error(res.msg || '加载失败');
+        }
+
+        const { records, total, page, pageSize: ps } = res.data;
+        currentData = records || [];
+        totalRecords = total || 0;
+        totalPages = Math.ceil(totalRecords / ps);
+
+        renderTable();
+        updatePagination();
+        updateStats();
+        updateSelectedButtons();
+      } catch (e) {
+        showToast('❌ ' + e.message);
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="12">
+              <div class="empty-state">
+                <div class="icon">❌</div>
+                <div class="text">加载失败: ${e.message}</div>
+              </div>
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    // ===================== 渲染表格 =====================
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      
+      if (currentData.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="12">
+              <div class="empty-state">
+                <div class="icon">📭</div>
+                <div class="text">暂无数据</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = currentData.map((r, index) => {
+        const rowClass = r.status === 0 ? 'deleted' : (r.is_modified ? 'modified' : '');
+        const statusBadge = r.status === 1 
+          ? '<span class="status-badge status-valid">✓ 有效</span>' 
+          : '<span class="status-badge status-deleted">✗ 已删除</span>';
+        const modifiedTag = r.is_modified ? '<span class="modified-tag">已修改</span>' : '';
+        const isSelected = selectedIds.has(r.id);
+
+        return `
+          <tr class="${rowClass}" data-id="${r.id}">
+            <td class="checkbox-col">
+              <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelect(${r.id})">
+            </td>
+            <td>${(currentPage - 1) * pageSize + index + 1}</td>
+            <td>${r.api_t_number || '-'}</td>
+            <td>${r.api_work_date || '-'}</td>
+            <td>${r.api_work_type_name || '-'}</td>
+            <td>
+              ${r.current_acre !== r.api_acre 
+                ? `<span style="text-decoration:line-through;color:#999;font-size:11px;">${formatAcre(r.api_acre)}</span> → <strong>${formatAcre(r.current_acre)}</strong>`
+                : formatAcre(r.current_acre)}
+            </td>
+            <td>
+              ${r.current_ok_acre !== r.api_ok_acre 
+                ? `<span style="text-decoration:line-through;color:#999;font-size:11px;">${formatAcre(r.api_ok_acre)}</span> → <strong>${formatAcre(r.current_ok_acre)}</strong>`
+                : formatAcre(r.current_ok_acre)}
+            </td>
+            <td>${r.current_plate_no || '-'}</td>
+            <td>${r.current_driver_name || '-'}</td>
+            <td>${r.current_org_name || '-'}</td>
+            <td>${statusBadge}${modifiedTag}</td>
+            <td>
+              <button class="btn btn-primary btn-sm" onclick="editRecord(${r.id})" ${r.status === 0 ? 'disabled' : ''}>编辑</button>
+              ${r.status === 1 
+                ? `<button class="btn btn-danger btn-sm" onclick="deleteRecord(${r.id})">删除</button>`
+                : `<button class="btn btn-success btn-sm" onclick="restoreRecord(${r.id})">恢复</button>`
+              }
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ===================== 更新分页 =====================
+    function updatePagination() {
+      document.getElementById('current-page').textContent = currentPage;
+      document.getElementById('total-pages').textContent = totalPages;
+      document.getElementById('total-records').textContent = totalRecords;
+      
+      document.getElementById('first-page').disabled = currentPage === 1;
+      document.getElementById('prev-page').disabled = currentPage === 1;
+      document.getElementById('next-page').disabled = currentPage === totalPages;
+      document.getElementById('last-page').disabled = currentPage === totalPages;
+    }
+
+    // ===================== 更新统计 =====================
+    async function updateStats() {
+      try {
+        // 获取所有状态的统计数据
+        const [validRes, deletedRes, modifiedRes] = await Promise.all([
+          fetch(`${API}/api/raw-records?status=1&pageSize=1`).then(r => r.json()),
+          fetch(`${API}/api/raw-records?status=0&pageSize=1`).then(r => r.json()),
+          fetch(`${API}/api/raw-records?isModified=1&pageSize=1`).then(r => r.json())
+        ]);
+
+        const validCount = validRes.data?.total || 0;
+        const deletedCount = deletedRes.data?.total || 0;
+        const modifiedCount = modifiedRes.data?.total || 0;
+
+        document.getElementById('stat-total').textContent = totalRecords;
+        document.getElementById('stat-valid').textContent = validCount;
+        document.getElementById('stat-modified').textContent = modifiedCount;
+        document.getElementById('stat-deleted').textContent = deletedCount;
+      } catch (e) {
+        console.error('更新统计失败:', e);
+      }
+    }
+
+    // ===================== 分页操作 =====================
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      loadData(page);
+    }
+
+    function changePageSize() {
+      pageSize = parseInt(document.getElementById('page-size').value);
+      loadData(1);
+    }
+
+    // ===================== 筛选操作 =====================
+    function resetFilters() {
+      initDateFilter();
+      document.getElementById('filter-tNumber').value = '';
+      document.getElementById('filter-type').value = '';
+      document.getElementById('filter-org').value = '';
+      document.getElementById('filter-status').value = '';
+      document.getElementById('filter-modified').value = '';
+      loadData(1);
+    }
+
+    // ===================== 选择操作 =====================
+    function toggleSelect(id) {
+      if (selectedIds.has(id)) {
+        selectedIds.delete(id);
+      } else {
+        selectedIds.add(id);
+      }
+      updateSelectedButtons();
+    }
+
+    function toggleSelectAll() {
+      const selectAll = document.getElementById('select-all').checked;
+      if (selectAll) {
+        currentData.forEach(r => selectedIds.add(r.id));
+      } else {
+        currentData.forEach(r => selectedIds.delete(r.id));
+      }
+      renderTable();
+      updateSelectedButtons();
+    }
+
+    function updateSelectedButtons() {
+      const count = selectedIds.size;
+      document.getElementById('selected-count').textContent = count;
+      document.getElementById('batch-org-btn').disabled = count === 0;
+      document.getElementById('batch-delete-btn').disabled = count === 0;
+      document.getElementById('batch-restore-btn').disabled = count === 0;
+    }
+
+    // ===================== 编辑记录 =====================
+    async function editRecord(id) {
+      try {
+        const res = await fetch(`${API}/api/raw-records/${id}`).then(r => r.json());
+        if (res.code !== 0) {
+          throw new Error(res.msg || '加载详情失败');
+        }
+
+        const record = res.data;
+        editingId = id;
+
+        // 填充表单
+        document.getElementById('edit-t-number').value = record.api_t_number || '';
+        document.getElementById('edit-work-date').value = record.api_work_date || '';
+        document.getElementById('edit-work-type').value = record.api_work_type_name || '';
+        
+        // 显示旧值和新值对比
+        document.getElementById('old-acre').textContent = formatAcre(record.api_acre);
+        document.getElementById('edit-acre').value = record.current_acre || 0;
+        
+        document.getElementById('old-ok-acre').textContent = formatAcre(record.api_ok_acre);
+        document.getElementById('edit-ok-acre').value = record.current_ok_acre || 0;
+        
+        document.getElementById('old-plate-no').textContent = record.api_plate_no || '-';
+        document.getElementById('edit-plate-no').value = record.current_plate_no || '';
+        
+        document.getElementById('old-driver-name').textContent = record.api_driver_name || '-';
+        document.getElementById('edit-driver-name').value = record.current_driver_name || '';
+        
+        document.getElementById('edit-org-id').value = record.current_org_id || '';
+        document.getElementById('edit-remark').value = record.remark || '';
+
+        // 显示对话框
+        document.getElementById('edit-dialog').classList.add('show');
+      } catch (e) {
+        showToast('❌ ' + e.message);
+      }
+    }
+
+    function closeEditDialog() {
+      document.getElementById('edit-dialog').classList.remove('show');
+      editingId = null;
+    }
+
+    async function saveEdit() {
+      if (!editingId) return;
+
+      const updates = {
+        current_acre: parseFloat(document.getElementById('edit-acre').value) || 0,
+        current_ok_acre: parseFloat(document.getElementById('edit-ok-acre').value) || 0,
+        current_plate_no: document.getElementById('edit-plate-no').value.trim(),
+        current_driver_name: document.getElementById('edit-driver-name').value.trim(),
+        current_org_id: parseInt(document.getElementById('edit-org-id').value) || 0,
+        remark: document.getElementById('edit-remark').value.trim()
+      };
+
+      const saveBtn = document.getElementById('save-btn');
+      saveBtn.disabled = true;
+      saveBtn.textContent = '⏳ 保存中...';
+
+      try {
+        const res = await fetch(`${API}/api/raw-records/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates)
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          showToast('✅ 保存成功');
+          closeEditDialog();
+          loadData(currentPage);
+        } else {
+          throw new Error(res.msg || '保存失败');
+        }
+      } catch (e) {
+        showToast('❌ ' + e.message);
+      } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = '💾 保存修改';
+      }
+    }
+
+    // ===================== 删除/恢复记录 =====================
+    async function deleteRecord(id) {
+      if (!confirm('确定要删除这条记录吗？此操作为软删除，可以恢复。')) return;
+
+      try {
+        const res = await fetch(`${API}/api/raw-records/${id}/delete`, {
+          method: 'POST'
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          showToast('✅ 删除成功');
+          loadData(currentPage);
+        } else {
+          throw new Error(res.msg || '删除失败');
+        }
+      } catch (e) {
+        showToast('❌ ' + e.message);
+      }
+    }
+
+    async function restoreRecord(id) {
+      if (!confirm('确定要恢复这条记录吗？')) return;
+
+      try {
+        const res = await fetch(`${API}/api/raw-records/${id}/restore`, {
+          method: 'POST'
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          showToast('✅ 恢复成功');
+          loadData(currentPage);
+        } else {
+          throw new Error(res.msg || '恢复失败');
+        }
+      } catch (e) {
+        showToast('❌ ' + e.message);
+      }
+    }
+
+    // ===================== 批量操作 =====================
+    function batchModifyOrg() {
+      if (selectedIds.size === 0) {
+        showToast('⚠️ 请先选择记录');
+        return;
+      }
+      document.getElementById('batch-count').textContent = selectedIds.size;
+      document.getElementById('batch-org-dialog').classList.add('show');
+    }
+
+    function closeBatchOrgDialog() {
+      document.getElementById('batch-org-dialog').classList.remove('show');
+    }
+
+    async function confirmBatchOrg() {
+      const orgId = parseInt(document.getElementById('batch-org-select').value);
+      if (!orgId) {
+        showToast('⚠️ 请选择合作社');
+        return;
+      }
+
+      const org = orgOptions.find(o => o.id === orgId);
+      if (!org) {
+        showToast('⚠️ 无效的合作社');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API}/api/raw-records/batch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ids: Array.from(selectedIds),
+            updates: {
+              current_org_id: orgId,
+              current_org_name: org.name
+            }
+          })
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          showToast('✅ 批量修改成功');
+          closeBatchOrgDialog();
+          selectedIds.clear();
+          loadData(currentPage);
+        } else {
+          throw new Error(res.msg || '批量修改失败');
+        }
+      } catch (e) {
+        showToast('❌ ' + e.message);
+      }
+    }
+
+    async function batchDelete() {
+      if (selectedIds.size === 0) {
+        showToast('⚠️ 请先选择记录');
+        return;
+      }
+
+      if (!confirm(`确定要删除选中的 ${selectedIds.size} 条记录吗？`)) return;
+
+      try {
+        const res = await fetch(`${API}/api/raw-records/batch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ids: Array.from(selectedIds),
+            updates: { status: 0 }
+          })
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          showToast('✅ 批量删除成功');
+          selectedIds.clear();
+          loadData(currentPage);
+        } else {
+          throw new Error(res.msg || '批量删除失败');
+        }
+      } catch (e) {
+        showToast('❌ ' + e.message);
+      }
+    }
+
+    async function batchRestore() {
+      if (selectedIds.size === 0) {
+        showToast('⚠️ 请先选择记录');
+        return;
+      }
+
+      if (!confirm(`确定要恢复选中的 ${selectedIds.size} 条记录吗？`)) return;
+
+      try {
+        const res = await fetch(`${API}/api/raw-records/batch`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ids: Array.from(selectedIds),
+            updates: { status: 1 }
+          })
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          showToast('✅ 批量恢复成功');
+          selectedIds.clear();
+          loadData(currentPage);
+        } else {
+          throw new Error(res.msg || '批量恢复失败');
+        }
+      } catch (e) {
+        showToast('❌ ' + e.message);
+      }
+    }
+
+    // ===================== 导出明细 =====================
+    function exportDetails() {
+      const params = new URLSearchParams({
+        startDate: document.getElementById('filter-start-date').value,
+        endDate: document.getElementById('filter-end-date').value,
+        tNumber: document.getElementById('filter-tNumber').value,
+        workType: document.getElementById('filter-type').value,
+        orgId: document.getElementById('filter-org').value
+      });
+
+      const url = `${API}/api/export/details?${params}`;
+      
+      // 创建下载链接
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.click();
+      
+      showToast('📥 开始导出...');
+    }
+
+    // ===================== 工具函数 =====================
+    function formatAcre(n) {
+      if (!n && n !== 0) return '0';
+      return parseFloat(n).toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>

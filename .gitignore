@@ -1,0 +1,45 @@
+# 依赖
+node_modules/
+package-lock.json
+
+# 环境变量（包含敏感信息）
+.env
+*.pem
+*.key
+
+# 上传的临时文件
+uploads/
+*.xlsx
+*.xls
+
+# 日志文件
+*.log
+logs/
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# IDE配置
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 测试和调试文件
+check_*.js
+test_*.js
+debug_*.js
+migrate_*.js
+
+# 数据库备份
+*.db.backup
+*.sql.backup
+
+# 历史归档（可选，根据团队需求决定）
+# history/
+
+# 文档（可选，根据需要调整）
+# CODE_REVIEW.md
+# PROJECT_CHECKLIST.md

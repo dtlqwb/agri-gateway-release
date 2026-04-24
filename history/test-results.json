@@ -1,0 +1,93 @@
+{
+  "timestamp": "2026-04-23T11:07:23.751Z",
+  "total": 21,
+  "passed": 21,
+  "failed": 0,
+  "passRate": "100.0%",
+  "tests": [
+    {
+      "name": "API健康检查",
+      "status": "passed"
+    },
+    {
+      "name": "超管登录",
+      "status": "passed"
+    },
+    {
+      "name": "农户登录",
+      "status": "passed"
+    },
+    {
+      "name": "超管获取管理员列表",
+      "status": "passed"
+    },
+    {
+      "name": "未授权访问拒绝",
+      "status": "passed"
+    },
+    {
+      "name": "查询云途安统计",
+      "status": "passed"
+    },
+    {
+      "name": "查询作业记录（不分页）",
+      "status": "passed"
+    },
+    {
+      "name": "查询作业记录统计",
+      "status": "passed"
+    },
+    {
+      "name": "查询云途安设备列表",
+      "status": "passed"
+    },
+    {
+      "name": "查询旧供应商设备列表",
+      "status": "passed"
+    },
+    {
+      "name": "查询旧供应商设备列表",
+      "status": "passed"
+    },
+    {
+      "name": "查询旧供应商统计",
+      "status": "passed"
+    },
+    {
+      "name": "获取合作社列表",
+      "status": "passed"
+    },
+    {
+      "name": "获取农户列表",
+      "status": "passed"
+    },
+    {
+      "name": "查询设备列表（含作业类型）",
+      "status": "passed"
+    },
+    {
+      "name": "查询单条作业记录详情",
+      "status": "passed"
+    },
+    {
+      "name": "导出预览（农业汇总）",
+      "status": "passed"
+    },
+    {
+      "name": "查询全量作业记录",
+      "status": "passed"
+    },
+    {
+      "name": "查询云途安作业类型",
+      "status": "passed"
+    },
+    {
+      "name": "查询农户统计数据（带orgId）",
+      "status": "passed"
+    },
+    {
+      "name": "查询设备列表（含作业类型）",
+      "status": "passed"
+    }
+  ]
+}

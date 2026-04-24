@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>智慧农机 - 农户端</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; background: #f0f2f5; color: #333; min-height: 100vh; }
+
+    /* 登录页 */
+    .login-page { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; background: linear-gradient(160deg, #1a73e8 0%, #0d47a1 50%, #1b5e20 100%); }
+    .login-card { width: 100%; max-width: 380px; background: #fff; border-radius: 20px; padding: 40px 28px 32px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .login-logo { text-align: center; margin-bottom: 32px; }
+    .login-logo .icon { font-size: 48px; }
+    .login-logo h1 { font-size: 20px; font-weight: 700; margin-top: 8px; color: #333; }
+    .login-logo p { font-size: 13px; color: #999; margin-top: 4px; }
+    .login-field { margin-bottom: 16px; }
+    .login-field label { display: block; font-size: 13px; color: #666; margin-bottom: 6px; font-weight: 500; }
+    .login-field input { width: 100%; padding: 12px 14px; border: 1.5px solid #e0e0e0; border-radius: 12px; font-size: 16px; transition: border-color 0.2s; outline: none; }
+    .login-field input:focus { border-color: #1a73e8; }
+    .login-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #1a73e8, #0d47a1); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s, opacity 0.2s; }
+    .login-btn:active { transform: scale(0.98); }
+    .login-btn:disabled { opacity: 0.6; }
+    .login-error { color: #f44336; font-size: 13px; text-align: center; margin-top: 12px; min-height: 20px; }
+    .login-footer { margin-top: 24px; text-align: center; font-size: 12px; color: rgba(255,255,255,0.6); }
+
+    /* 主页面 */
+    .main-page { display: none; }
+    .main-page.active { display: block; }
+
+    /* 顶部栏 */
+    .top-bar { background: linear-gradient(135deg, #1a73e8, #0d47a1); color: #fff; padding: 16px; position: sticky; top: 0; z-index: 100; }
+    .top-bar .row1 { display: flex; align-items: center; justify-content: space-between; }
+    .top-bar .org-name { font-size: 16px; font-weight: 600; }
+    .top-bar .logout { font-size: 13px; opacity: 0.8; cursor: pointer; padding: 4px 10px; border-radius: 8px; background: rgba(255,255,255,0.15); }
+    .top-bar .user-info { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+
+    /* 统计卡片 */
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px; }
+    .stat-card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .stat-card .label { font-size: 12px; color: #999; margin-bottom: 4px; }
+    .stat-card .value { font-size: 24px; font-weight: 700; color: #1a73e8; }
+    .stat-card .value.green { color: #4caf50; }
+    .stat-card .value.orange { color: #ff9800; }
+    .stat-card .sub { font-size: 11px; color: #999; margin-top: 4px; }
+
+    /* 筛选栏 */
+    .filter-bar { padding: 0 12px 8px; display: flex; gap: 8px; overflow-x: auto; }
+    .filter-chip { padding: 6px 14px; border-radius: 20px; font-size: 13px; white-space: nowrap; background: #fff; color: #666; border: 1px solid #e0e0e0; cursor: pointer; transition: all 0.2s; }
+    .filter-chip.active { background: #1a73e8; color: #fff; border-color: #1a73e8; }
+
+    /* 设备分组 */
+    .device-group { padding: 0 12px; margin-bottom: 12px; }
+    .device-group-title { font-size: 14px; font-weight: 600; color: #333; padding: 8px 0; display: flex; align-items: center; justify-content: space-between; }
+    .device-group-title .count { font-size: 12px; color: #999; font-weight: 400; }
+
+    /* 作业记录卡片 */
+    .work-card { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .work-card .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+    .work-card .machine-info { display: flex; align-items: center; gap: 8px; }
+    .work-card .machine-icon { width: 36px; height: 36px; background: #e8f0fe; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .work-card .machine-name { font-size: 14px; font-weight: 600; }
+    .work-card .machine-tno { font-size: 11px; color: #999; }
+    .work-card .type-tag { padding: 3px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; background: #e8f5e9; color: #2e7d32; }
+    .work-card .records { border-top: 1px solid #f5f5f5; padding-top: 8px; }
+    .work-card .record-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; }
+    .work-card .record-row .date { font-size: 13px; color: #666; }
+    .work-card .record-row .acre { font-size: 15px; font-weight: 700; color: #1a73e8; }
+    .work-card .record-row .acre small { font-size: 11px; font-weight: 400; color: #999; }
+    .work-card .show-more { text-align: center; padding: 6px; color: #1a73e8; font-size: 13px; cursor: pointer; }
+
+    /* 空状态 */
+    .empty-state { text-align: center; padding: 40px 20px; color: #999; }
+    .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-state .text { font-size: 14px; }
+
+    /* 加载中 */
+    .loading { text-align: center; padding: 30px; color: #999; }
+    .loading .spinner { display: inline-block; width: 24px; height: 24px; border: 2px solid #ddd; border-top-color: #1a73e8; border-radius: 50%; animation: spin 0.8s linear infinite; margin-bottom: 8px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .format-acre { font-weight: 700; }
+
+    /* 设备管理样式 */
+    .device-card { background: #fff; border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .device-card .device-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .device-card .device-info { flex: 1; }
+    .device-card .device-id { font-size: 15px; font-weight: 600; color: #333; }
+    .device-card .device-detail { font-size: 12px; color: #999; margin-top: 4px; }
+    .device-card .work-type-badge { padding: 4px 12px; border-radius: 12px; font-size: 12px; font-weight: 500; background: #e8f5e9; color: #2e7d32; cursor: pointer; transition: all 0.2s; }
+    .device-card .work-type-badge:hover { background: #c8e6c9; transform: scale(1.05); }
+    
+    /* 作业类型选择弹窗 */
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+    .modal-overlay.active { display: flex; }
+    .modal-content { background: #fff; border-radius: 16px; padding: 24px; width: 90%; max-width: 400px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 16px; color: #333; }
+    .modal-body { margin-bottom: 20px; }
+    .modal-body select { width: 100%; padding: 10px 12px; border: 1.5px solid #e0e0e0; border-radius: 8px; font-size: 14px; outline: none; }
+    .modal-body select:focus { border-color: #1a73e8; }
+    .modal-footer { display: flex; gap: 10px; }
+    .modal-footer button { flex: 1; padding: 10px; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; }
+    .btn-cancel { background: #f5f5f5; color: #666; }
+    .btn-confirm { background: #1a73e8; color: #fff; }
+    .btn-confirm:active { opacity: 0.8; }
+  </style>
+</head>
+<body>
+  <!-- 登录页 -->
+  <div id="loginPage" class="login-page">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="icon">🌾</div>
+        <h1>智慧农机监管平台</h1>
+        <p>农户端 · 作业数据查看</p>
+      </div>
+      <div class="login-field">
+        <label>手机号</label>
+        <input id="loginPhone" type="tel" placeholder="请输入手机号" maxlength="11" autocomplete="tel">
+      </div>
+      <div class="login-field">
+        <label>密码</label>
+        <input id="loginPassword" type="password" placeholder="请输入密码" autocomplete="current-password">
+      </div>
+      <button class="login-btn" id="loginBtn" onclick="doLogin()">登 录</button>
+      <div class="login-error" id="loginError"></div>
+    </div>
+    <div class="login-footer">灵丘县煊耀通讯 · 聚合数据中心</div>
+  </div>
+
+  <!-- 主页面（登录后显示） -->
+  <div id="mainPage" class="main-page">
+    <div class="top-bar">
+      <div class="row1">
+        <div class="org-name" id="orgName">--</div>
+        <div class="logout" onclick="doLogout()">退出登录</div>
+      </div>
+      <div class="user-info" id="userInfo">--</div>
+    </div>
+
+    <!-- Tab切换 -->
+    <div style="display:flex;background:#fff;border-bottom:1px solid #eee;position:sticky;top:0;z-index:99;">
+      <div id="tabRecords" style="flex:1;text-align:center;padding:12px;font-size:14px;color:#1a73e8;border-bottom:2px solid #1a73e8;font-weight:600;cursor:pointer;" onclick="switchFarmerTab('records')">📋 作业记录</div>
+      <div id="tabDevices" style="flex:1;text-align:center;padding:12px;font-size:14px;color:#666;cursor:pointer;" onclick="switchFarmerTab('devices')">🚜 设备管理</div>
+    </div>
+
+    <!-- 作业记录页 -->
+    <div id="pageRecords">
+
+    <!-- 统计 -->
+    <div class="stat-grid" id="statGrid">
+      <div class="stat-card">
+        <div class="label">设备数</div>
+        <div class="value" id="statMachines">-</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">作业总面积</div>
+        <div class="value green" id="statAcre">-</div>
+        <div class="sub">亩</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">作业记录</div>
+        <div class="value orange" id="statRecords">-</div>
+        <div class="sub">条</div>
+      </div>
+      <div class="stat-card">
+        <div class="label">作业类型</div>
+        <div class="value" id="statTypes">-</div>
+        <div class="sub">种</div>
+      </div>
+    </div>
+
+    <!-- 日期选择 -->
+    <div style="padding:8px 16px;display:flex;align-items:center;gap:8px;">
+      <input type="date" id="dateStart" style="flex:1;padding:8px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;" onchange="onDateChange()">
+      <span style="color:#999;font-size:13px;">至</span>
+      <input type="date" id="dateEnd" style="flex:1;padding:8px 10px;border:1px solid #e0e0e0;border-radius:8px;font-size:13px;color:#333;" onchange="onDateChange()">
+      <button onclick="resetDateRange()" style="padding:8px 12px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:8px;font-size:12px;color:#666;cursor:pointer;white-space:nowrap;">今年</button>
+    </div>
+
+    <!-- 类型筛选 -->
+    <div class="filter-bar" id="filterBar">
+      <div class="filter-chip active" onclick="filterByType('all', this)">全部</div>
+    </div>
+
+    <!-- 作业记录列表 -->
+    <div id="workList" style="padding-bottom:20px;">
+      <div class="loading"><div class="spinner"></div><br>加载中...</div>
+    </div>
+    </div><!-- 结束 pageRecords -->
+
+    <!-- 设备管理页 -->
+    <div id="pageDevices" style="display:none;padding:12px;">
+      <div id="deviceList">
+        <div class="loading"><div class="spinner"></div><br>加载中...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 作业类型选择弹窗 -->
+  <div id="workTypeModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-title">🔧 修改作业类型</div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:#666;margin-bottom:12px;">设备：<span id="modalDeviceId" style="font-weight:600;"></span></p>
+        <select id="workTypeSelect">
+          <option value="玉米播种">玉米播种</option>
+          <option value="小麦播种">小麦播种</option>
+          <option value="大豆播种">大豆播种</option>
+          <option value="玉米收割">玉米收割</option>
+          <option value="小麦收割">小麦收割</option>
+          <option value="水稻插秧">水稻插秧</option>
+          <option value="水稻收割">水稻收割</option>
+          <option value="深耕">深耕</option>
+          <option value="旋耕">旋耕</option>
+          <option value="植保">植保</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-cancel" onclick="closeWorkTypeModal()">取消</button>
+        <button class="btn-confirm" onclick="confirmWorkTypeChange()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = '';
+    let currentUser = null; // { id, phone, name, org_id, org_name }
+    let allRecords = [];
+    let allMachines = [];
+    let currentFilter = 'all';
+
+    // 默认日期：当年
+    function getThisYearRange() {
+      const y = new Date().getFullYear();
+      return { startDate: `${y}-01-01`, endDate: `${y}-12-31` };
+    }
+    let dateRange = getThisYearRange();
+
+    // 登录
+    async function doLogin() {
+      const phone = document.getElementById('loginPhone').value.trim();
+      const password = document.getElementById('loginPassword').value.trim();
+      const errorEl = document.getElementById('loginError');
+      const btn = document.getElementById('loginBtn');
+
+      if (!phone || !password) { errorEl.textContent = '请输入手机号和密码'; return; }
+
+      btn.disabled = true;
+      btn.textContent = '登录中...';
+      errorEl.textContent = '';
+
+      try {
+        const res = await fetch(`${API}/api/farmer/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, password })
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          currentUser = res.data;
+          localStorage.setItem('farmer_user', JSON.stringify(currentUser));
+          showMainPage();
+        } else {
+          errorEl.textContent = res.msg || '登录失败';
+        }
+      } catch (e) {
+        errorEl.textContent = '网络错误，请重试';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '登 录';
+      }
+    }
+
+    // 回车登录
+    document.getElementById('loginPassword').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('loginPhone').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('loginPassword').focus(); });
+
+    function doLogout() {
+      currentUser = null;
+      localStorage.removeItem('farmer_user');
+      document.getElementById('loginPage').style.display = '';
+      document.getElementById('mainPage').classList.remove('active');
+      document.getElementById('loginPhone').value = '';
+      document.getElementById('loginPassword').value = '';
+    }
+
+    function showMainPage() {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('mainPage').classList.add('active');
+      document.getElementById('orgName').textContent = currentUser.org_name || '未关联合作社';
+      document.getElementById('userInfo').textContent = `${currentUser.name || currentUser.phone} · 农户端`;
+      initDateInputs();
+      loadData();
+    }
+
+    // 自动登录
+    function tryAutoLogin() {
+      try {
+        const saved = localStorage.getItem('farmer_user');
+        if (saved) {
+          currentUser = JSON.parse(saved);
+          if (currentUser && currentUser.org_id) {
+            showMainPage();
+            return;
+          }
+        }
+      } catch(e) {}
+    }
+
+    // 加载数据
+    function onDateChange() {
+      dateRange.startDate = document.getElementById('dateStart').value || '';
+      dateRange.endDate = document.getElementById('dateEnd').value || '';
+      loadData();
+    }
+
+    function resetDateRange() {
+      dateRange = getThisYearRange();
+      document.getElementById('dateStart').value = dateRange.startDate;
+      document.getElementById('dateEnd').value = dateRange.endDate;
+      loadData();
+    }
+
+    function initDateInputs() {
+      document.getElementById('dateStart').value = dateRange.startDate;
+      document.getElementById('dateEnd').value = dateRange.endDate;
+    }
+
+    async function loadData() {
+      if (!currentUser || !currentUser.org_id) return;
+
+      try {
+        // 并行加载统计和记录
+        let qp = `orgId=${currentUser.org_id}`;
+        if (dateRange.startDate) qp += `&startDate=${dateRange.startDate}`;
+        if (dateRange.endDate) qp += `&endDate=${dateRange.endDate}`;
+        const [statsRes, recordsRes] = await Promise.all([
+          fetch(`${API}/api/farmer/stats?${qp}`).then(r => r.json()),
+          fetch(`${API}/api/farmer/records?${qp}`).then(r => r.json())
+        ]);
+
+        const stats = statsRes.data || {};
+        allRecords = recordsRes.data || [];
+        allMachines = stats.machines || [];
+
+        // 填充统计
+        document.getElementById('statMachines').textContent = stats.machineCount || 0;
+        document.getElementById('statAcre').textContent = formatAcre(stats.totalAcre || 0);
+        document.getElementById('statRecords').textContent = stats.recordCount || 0;
+        document.getElementById('statTypes').textContent = (stats.byType || []).length;
+
+        // 类型筛选
+        const types = stats.byType || [];
+        const filterBar = document.getElementById('filterBar');
+        filterBar.innerHTML = `<div class="filter-chip ${currentFilter === 'all' ? 'active' : ''}" onclick="filterByType('all', this)">全部</div>` +
+          types.map(t => `<div class="filter-chip ${currentFilter === t.work_type_name ? 'active' : ''}" onclick="filterByType('${t.work_type_name}', this)">${t.work_type_name || '其他'} (${formatAcre(t.total_acre)}亩)</div>`).join('');
+
+        renderRecords();
+      } catch (e) {
+        document.getElementById('workList').innerHTML = `<div class="empty-state"><div class="icon">❌</div><div class="text">加载失败: ${e.message}</div></div>`;
+      }
+    }
+
+    function filterByType(type, el) {
+      currentFilter = type;
+      if (el) {
+        el.parentElement.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        el.classList.add('active');
+      }
+      renderRecords();
+    }
+
+    function renderRecords() {
+      const container = document.getElementById('workList');
+      let records = allRecords;
+      if (currentFilter !== 'all') {
+        records = records.filter(r => r.work_type_name === currentFilter);
+      }
+
+      if (records.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="text">暂无作业记录</div></div>';
+        return;
+      }
+
+      // 按设备分组
+      const grouped = {};
+      records.forEach(r => {
+        const key = r.t_number;
+        if (!grouped[key]) {
+          const machine = allMachines.find(m => m.t_number === key);
+          grouped[key] = {
+            t_number: key,
+            plate_no: r.plate_no || (machine ? machine.plate_no : ''),
+            driver_name: r.driver_name || (machine ? machine.driver_name : ''),
+            org_name: r.org_name || '',
+            records: []
+          };
+        }
+        grouped[key].records.push(r);
+      });
+
+      // 按记录数排序
+      const groups = Object.values(grouped).sort((a, b) => b.records.length - a.records.length);
+
+      container.innerHTML = groups.map(g => {
+        const hasPlate = g.plate_no && g.plate_no !== g.t_number;
+        const machineLabel = hasPlate ? g.plate_no : g.t_number;
+        const subLabel = hasPlate ? `终端: ${g.t_number}` : '';
+        const totalAcre = g.records.reduce((s, r) => s + (r.acre || 0), 0);
+        // 展示前5条，多的折叠
+        const showCount = 5;
+        const shown = g.records.slice(0, showCount);
+        const hidden = g.records.slice(showCount);
+        const types = [...new Set(g.records.map(r => r.work_type_name).filter(Boolean))];
+
+        return `
+          <div class="device-group">
+            <div class="device-group-title">
+              <span>🚜 ${machineLabel} ${subLabel ? `<small style="color:#999;font-weight:400;">(${subLabel})</small>` : ''}</span>
+              <span class="count">${g.records.length}条 · ${formatAcre(totalAcre)}亩</span>
+            </div>
+            ${shown.map(r => `
+              <div class="work-card">
+                <div class="header">
+                  <div class="machine-info">
+                    <div class="record-row" style="flex:1;">
+                      <span class="date">${r.work_date || '--'}</span>
+                      <span class="acre">${formatAcre(r.acre)} <small>亩</small></span>
+                    </div>
+                  </div>
+                  <div class="type-tag">${r.work_type_name || '未知'}</div>
+                </div>
+                ${g.driver_name ? `<div style="font-size:12px;color:#999;">👤 ${g.driver_name}</div>` : ''}
+              </div>
+            `).join('')}
+            ${hidden.length > 0 ? `
+              <div class="show-more" onclick="this.parentElement.querySelectorAll('.work-card').forEach(c => c.style.display = ''); this.style.display = 'none';">
+                展开剩余 ${hidden.length} 条记录 ▼
+              </div>
+              <div style="display:none;">
+                ${hidden.map(r => `
+                  <div class="work-card">
+                    <div class="header">
+                      <div class="machine-info">
+                        <div class="record-row" style="flex:1;">
+                          <span class="date">${r.work_date || '--'}</span>
+                          <span class="acre">${formatAcre(r.acre)} <small>亩</small></span>
+                        </div>
+                      </div>
+                      <div class="type-tag">${r.work_type_name || '未知'}</div>
+                    </div>
+                  </div>
+                `).join('')}
+              </div>
+            ` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    function formatAcre(n) {
+      if (!n && n !== 0) return '0';
+      return parseFloat(n).toLocaleString('zh-CN', { maximumFractionDigits: 2 });
+    }
+
+    // ==================== Tab切换 ====================
+    let currentTab = 'records'; // records | devices
+    let allDevices = []; // 设备列表
+    let currentEditingDevice = null; // 当前正在编辑的设备
+
+    /**
+     * 切换Tab
+     * @param {string} tab - 'records' 或 'devices'
+     */
+    function switchFarmerTab(tab) {
+      currentTab = tab;
+      
+      // 更新Tab样式
+      const tabRecords = document.getElementById('tabRecords');
+      const tabDevices = document.getElementById('tabDevices');
+      const pageRecords = document.getElementById('pageRecords');
+      const pageDevices = document.getElementById('pageDevices');
+      
+      if (tab === 'records') {
+        tabRecords.style.color = '#1a73e8';
+        tabRecords.style.borderBottom = '2px solid #1a73e8';
+        tabRecords.style.fontWeight = '600';
+        tabDevices.style.color = '#666';
+        tabDevices.style.borderBottom = 'none';
+        tabDevices.style.fontWeight = '400';
+        pageRecords.style.display = 'block';
+        pageDevices.style.display = 'none';
+      } else {
+        tabDevices.style.color = '#1a73e8';
+        tabDevices.style.borderBottom = '2px solid #1a73e8';
+        tabDevices.style.fontWeight = '600';
+        tabRecords.style.color = '#666';
+        tabRecords.style.borderBottom = 'none';
+        tabRecords.style.fontWeight = '400';
+        pageRecords.style.display = 'none';
+        pageDevices.style.display = 'block';
+        
+        // 加载设备列表
+        loadDevices();
+      }
+    }
+
+    // ==================== 设备管理 ====================
+
+    /**
+     * 加载设备列表
+     * @description 从API获取当前合作社的北斗设备列表
+     */
+    async function loadDevices() {
+      if (!currentUser || !currentUser.org_id) {
+        console.warn('[设备管理] 用户未登录或org_id为空');
+        return;
+      }
+
+      console.log(`[设备管理] 开始加载设备列表: orgId=${currentUser.org_id}`);
+      
+      try {
+        const res = await fetch(`${API}/api/devices/list?orgId=${currentUser.org_id}`);
+        const data = await res.json();
+        
+        if (data.code === 0) {
+          allDevices = data.data || [];
+          console.log(`[设备管理] 加载成功: ${allDevices.length} 台设备`);
+          renderDevices(allDevices);
+        } else {
+          console.error(`[设备管理] 加载失败: ${data.msg}`);
+          document.getElementById('deviceList').innerHTML = 
+            `<div class="empty-state"><div class="icon">❌</div><div class="text">加载失败: ${data.msg}</div></div>`;
+        }
+      } catch (error) {
+        console.error(`[设备管理] 网络错误: ${error.message}`);
+        document.getElementById('deviceList').innerHTML = 
+          `<div class="empty-state"><div class="icon">❌</div><div class="text">网络错误: ${error.message}</div></div>`;
+      }
+    }
+
+    /**
+     * 渲染设备列表
+     * @param {Array} devices - 设备数组
+     */
+    function renderDevices(devices) {
+      const container = document.getElementById('deviceList');
+      
+      if (!devices || devices.length === 0) {
+        container.innerHTML = '<div class="empty-state"><div class="icon">📭</div><div class="text">暂无设备</div></div>';
+        return;
+      }
+
+      container.innerHTML = devices.map(device => {
+        const workTypeName = device.work_type_name || '其他';
+        return `
+          <div class="device-card">
+            <div class="device-header">
+              <div class="device-info">
+                <div class="device-id">🚜 ${device.macid}</div>
+                <div class="device-detail">
+                  ${device.cooperative_name ? `🏢 ${device.cooperative_name}<br>` : ''}
+                  ${device.driver_name ? `👤 ${device.driver_name}` : ''}
+                </div>
+              </div>
+              <div class="work-type-badge" onclick="openWorkTypeModal('${device.macid}', '${workTypeName}')">
+                ${workTypeName}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /**
+     * 打开作业类型修改弹窗
+     * @param {string} macid - 设备终端号
+     * @param {string} currentWorkType - 当前作业类型
+     */
+    function openWorkTypeModal(macid, currentWorkType) {
+      currentEditingDevice = macid;
+      document.getElementById('modalDeviceId').textContent = macid;
+      document.getElementById('workTypeSelect').value = currentWorkType;
+      document.getElementById('workTypeModal').classList.add('active');
+      console.log(`[设备管理] 打开作业类型修改弹窗: macid=${macid}, currentType=${currentWorkType}`);
+    }
+
+    /**
+     * 关闭作业类型修改弹窗
+     */
+    function closeWorkTypeModal() {
+      document.getElementById('workTypeModal').classList.remove('active');
+      currentEditingDevice = null;
+      console.log('[设备管理] 关闭作业类型修改弹窗');
+    }
+
+    /**
+     * 确认修改作业类型
+     * @description 调用API更新设备的作业类型
+     */
+    async function confirmWorkTypeChange() {
+      if (!currentEditingDevice) {
+        console.warn('[设备管理] 未选择设备');
+        return;
+      }
+
+      const workTypeName = document.getElementById('workTypeSelect').value;
+      console.log(`[设备管理] 开始修改作业类型: macid=${currentEditingDevice}, newType=${workTypeName}`);
+
+      try {
+        const res = await fetch(`${API}/api/device/work-type`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            macid: currentEditingDevice,
+            workTypeName: workTypeName
+          })
+        });
+
+        const data = await res.json();
+        
+        if (data.code === 0) {
+          console.log(`[设备管理] 作业类型修改成功: macid=${currentEditingDevice}`);
+          alert('✅ 作业类型已更新，后续同步的数据将使用新的作业类型');
+          closeWorkTypeModal();
+          // 重新加载设备列表
+          await loadDevices();
+        } else {
+          console.error(`[设备管理] 作业类型修改失败: ${data.msg}`);
+          alert(`❌ 修改失败: ${data.msg}`);
+        }
+      } catch (error) {
+        console.error(`[设备管理] 网络错误: ${error.message}`);
+        alert(`❌ 网络错误: ${error.message}`);
+      }
+    }
+
+    // 初始化
+    tryAutoLogin();
+  </script>
+</body>
+</html>

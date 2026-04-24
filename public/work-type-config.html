@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>作业类型批量配置 - 智慧农机监管平台</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: #f5f7fa; }
+    
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .header h1 { font-size: 24px; margin-bottom: 5px; }
+    .header p { opacity: 0.9; font-size: 14px; }
+    
+    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+    
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #333;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-group label {
+      font-size: 13px;
+      color: #666;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    
+    .form-group input,
+    .form-group select {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-success {
+      background: #10b981;
+      color: white;
+    }
+    
+    .btn-success:hover {
+      background: #059669;
+    }
+    
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+    }
+    
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    
+    .btn-secondary {
+      background: #6b7280;
+      color: white;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+    }
+    
+    .config-list {
+      margin-top: 20px;
+    }
+    
+    .config-item {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .config-info {
+      flex: 1;
+    }
+    
+    .config-info h4 {
+      font-size: 15px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    
+    .config-meta {
+      font-size: 12px;
+      color: #6b7280;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    
+    .config-meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .tag {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .tag-global { background: #dbeafe; color: #1e40af; }
+    .tag-org { background: #fef3c7; color: #92400e; }
+    .tag-device { background: #d1fae5; color: #065f46; }
+    
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #9ca3af;
+    }
+    
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 14px 20px;
+      background: #10b981;
+      color: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      z-index: 9999;
+      animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+      from { transform: translateX(400px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.active {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+    }
+    
+    .modal-title {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    
+    .preview-list {
+      max-height: 300px;
+      overflow-y: auto;
+      margin: 16px 0;
+    }
+    
+    .preview-item {
+      padding: 8px 12px;
+      background: #f9fafb;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🎯 作业类型批量配置</h1>
+    <p>按日期范围批量设置作业类型，支持终端、合作社、全局三种级别</p>
+  </div>
+
+  <div class="container">
+    <!-- 新建配置 -->
+    <div class="card">
+      <div class="card-title">📝 新建作业类型配置</div>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label>数据源</label>
+          <select id="source">
+            <option value="old_api">旧供应商API</option>
+            <option value="beidou">北斗设备</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>开始日期 *</label>
+          <input type="date" id="startDate" required>
+        </div>
+        
+        <div class="form-group">
+          <label>结束日期 *</label>
+          <input type="date" id="endDate" required>
+        </div>
+        
+        <div class="form-group">
+          <label>终端号（可选）</label>
+          <input type="text" id="tNumber" placeholder="留空则应用到所有设备">
+        </div>
+        
+        <div class="form-group">
+          <label>合作社（可选）</label>
+          <select id="orgName">
+            <option value="">全部合作社</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>作业类型 *</label>
+          <select id="workTypeName" required>
+            <option value="">请选择</option>
+            <option value="玉米播种">玉米播种</option>
+            <option value="小麦播种">小麦播种</option>
+            <option value="大豆播种">大豆播种</option>
+            <option value="玉米收割">玉米收割</option>
+            <option value="小麦收割">小麦收割</option>
+            <option value="水稻插秧">水稻插秧</option>
+            <option value="水稻收割">水稻收割</option>
+            <option value="深耕">深耕</option>
+            <option value="旋耕">旋耕</option>
+            <option value="植保">植保</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="btn-group">
+        <button class="btn btn-primary" onclick="previewConfig()">👁️ 预览影响数据</button>
+        <button class="btn btn-success" onclick="createConfig()">✅ 创建配置</button>
+        <button class="btn btn-secondary" onclick="resetForm()">🔄 重置</button>
+      </div>
+    </div>
+
+    <!-- 配置列表 -->
+    <div class="card">
+      <div class="card-title">📋 已有配置列表</div>
+      <div id="configList" class="config-list">
+        <div class="empty-state">暂无配置，请创建新配置</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 预览弹窗 -->
+  <div id="previewModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-title">👁️ 预览影响数据</div>
+      <div id="previewInfo" style="margin-bottom: 12px;"></div>
+      <div id="previewList" class="preview-list"></div>
+      <div class="btn-group" style="justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="closeModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:3001/api';
+    let currentUser = null;
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', async () => {
+      checkAuth();
+      await loadOrgOptions();
+      await loadConfigs();
+      
+      // 设置默认日期（昨天到今天）
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      document.getElementById('startDate').value = yesterday.toISOString().substring(0, 10);
+      document.getElementById('endDate').value = today.toISOString().substring(0, 10);
+    });
+
+    function checkAuth() {
+      try {
+        const saved = localStorage.getItem('admin_user');
+        if (saved) {
+          currentUser = JSON.parse(saved);
+          if (!currentUser || !currentUser.token) {
+            throw new Error('未登录');
+          }
+        } else {
+          throw new Error('未登录');
+        }
+      } catch(e) {
+        alert('请先登录');
+        window.location.href = 'index.html';
+      }
+    }
+
+    async function loadOrgOptions() {
+      try {
+        const res = await fetch(`${API}/organizations`, {
+          headers: { 'Authorization': currentUser.token }
+        }).then(r => r.json());
+        
+        const orgs = res.data || [];
+        const select = document.getElementById('orgName');
+        orgs.forEach(org => {
+          const option = document.createElement('option');
+          option.value = org.name;
+          option.textContent = org.name;
+          select.appendChild(option);
+        });
+      } catch(e) {
+        console.error('加载合作社列表失败:', e);
+      }
+    }
+
+    async function loadConfigs() {
+      try {
+        const source = document.getElementById('source').value;
+        const res = await fetch(`${API}/work-type-configs?source=${source}`, {
+          headers: { 'Authorization': currentUser.token }
+        }).then(r => r.json());
+        
+        const configs = res.data || [];
+        const listDiv = document.getElementById('configList');
+        
+        if (configs.length === 0) {
+          listDiv.innerHTML = '<div class="empty-state">暂无配置，请创建新配置</div>';
+          return;
+        }
+        
+        listDiv.innerHTML = configs.map(config => {
+          const priorityLabel = config.priority === 2 ? '终端' : 
+                               config.priority === 1 ? '合作社' : '全局';
+          const priorityClass = config.priority === 2 ? 'tag-device' : 
+                               config.priority === 1 ? 'tag-org' : 'tag-global';
+          
+          return `
+            <div class="config-item">
+              <div class="config-info">
+                <h4>
+                  <span class="tag ${priorityClass}">${priorityLabel}</span>
+                  ${config.work_type_name}
+                </h4>
+                <div class="config-meta">
+                  <span>📅 ${config.start_date} ~ ${config.end_date}</span>
+                  <span>🔧 ${config.t_number || '所有设备'}</span>
+                  <span>🏢 ${config.org_name || '所有合作社'}</span>
+                  <span>📊 优先级: ${config.priority}</span>
+                </div>
+              </div>
+              <div>
+                <button class="btn btn-success" onclick="applyConfig(${config.id})" style="margin-right: 8px;">
+                  应用
+                </button>
+                <button class="btn btn-danger" onclick="deleteConfig(${config.id})">
+                  删除
+                </button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch(e) {
+        console.error('加载配置失败:', e);
+      }
+    }
+
+    async function createConfig() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const tNumber = document.getElementById('tNumber').value.trim();
+      const orgName = document.getElementById('orgName').value;
+      const workTypeName = document.getElementById('workTypeName').value;
+      const source = document.getElementById('source').value;
+
+      if (!startDate || !endDate || !workTypeName) {
+        alert('请填写必填项');
+        return;
+      }
+
+      if (startDate > endDate) {
+        alert('开始日期不能晚于结束日期');
+        return;
+      }
+
+      // 计算优先级
+      let priority = 0;
+      if (tNumber) priority = 2;
+      else if (orgName) priority = 1;
+
+      try {
+        const res = await fetch(`${API}/work-type-configs`, {
+          method: 'POST',
+          headers: { 
+            'Authorization': currentUser.token,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            source,
+            startDate,
+            endDate,
+            tNumber,
+            orgName,
+            workTypeName,
+            priority
+          })
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          showToast('✅ 配置创建成功');
+          await loadConfigs();
+        } else {
+          alert(res.msg || '创建失败');
+        }
+      } catch(e) {
+        alert('创建失败: ' + e.message);
+      }
+    }
+
+    async function previewConfig() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+      const tNumber = document.getElementById('tNumber').value.trim();
+      const orgName = document.getElementById('orgName').value;
+      const workTypeName = document.getElementById('workTypeName').value;
+      const source = document.getElementById('source').value;
+
+      if (!startDate || !endDate) {
+        alert('请选择日期范围');
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams({
+          source,
+          startDate,
+          endDate
+        });
+        if (tNumber) params.append('tNumber', tNumber);
+        if (orgName) params.append('orgName', orgName);
+
+        const res = await fetch(`${API}/work-type-configs/preview?${params}`, {
+          headers: { 'Authorization': currentUser.token }
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          const data = res.data;
+          document.getElementById('previewInfo').innerHTML = `
+            <p><strong>影响记录数:</strong> ${data.count} 条</p>
+            <p><strong>作业类型:</strong> ${workTypeName}</p>
+          `;
+          
+          const previewList = document.getElementById('previewList');
+          if (data.records && data.records.length > 0) {
+            previewList.innerHTML = data.records.slice(0, 20).map(r => 
+              `<div class="preview-item">
+                ${r.work_date} | 设备: ${r.t_number} | 合作社: ${r.org_name} | 面积: ${r.acre}亩
+              </div>`
+            ).join('');
+            if (data.count > 20) {
+              previewList.innerHTML += `<div style="text-align: center; color: #6b7280; padding: 8px;">... 还有 ${data.count - 20} 条记录</div>`;
+            }
+          } else {
+            previewList.innerHTML = '<div class="empty-state">没有匹配的记录</div>';
+          }
+          
+          document.getElementById('previewModal').classList.add('active');
+        } else {
+          alert(res.msg || '预览失败');
+        }
+      } catch(e) {
+        alert('预览失败: ' + e.message);
+      }
+    }
+
+    async function applyConfig(configId) {
+      if (!confirm('确定要应用此配置到历史数据吗？')) return;
+
+      try {
+        const res = await fetch(`${API}/work-type-configs/${configId}/apply`, {
+          method: 'POST',
+          headers: { 'Authorization': currentUser.token }
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          showToast(`✅ 已更新 ${res.data.affectedRows} 条记录`);
+        } else {
+          alert(res.msg || '应用失败');
+        }
+      } catch(e) {
+        alert('应用失败: ' + e.message);
+      }
+    }
+
+    async function deleteConfig(id) {
+      if (!confirm('确定要删除此配置吗？')) return;
+
+      try {
+        const res = await fetch(`${API}/work-type-configs/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': currentUser.token }
+        }).then(r => r.json());
+
+        if (res.code === 0) {
+          showToast('✅ 配置已删除');
+          await loadConfigs();
+        } else {
+          alert(res.msg || '删除失败');
+        }
+      } catch(e) {
+        alert('删除失败: ' + e.message);
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('previewModal').classList.remove('active');
+    }
+
+    function resetForm() {
+      document.getElementById('tNumber').value = '';
+      document.getElementById('orgName').value = '';
+      document.getElementById('workTypeName').value = '';
+    }
+
+    function showToast(message) {
+      const toast = document.createElement('div');
+      toast.className = 'toast';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    // 数据源改变时重新加载配置
+    document.getElementById('source').addEventListener('change', loadConfigs);
+  </script>
+</body>
+</html>
